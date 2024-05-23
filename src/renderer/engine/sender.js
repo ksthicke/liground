@@ -73,13 +73,17 @@ export default class EngineSender {
         this.cache.io.push(payload)
         break
       case 'info':
-        if ('multipv' in payload) {
+        if ('pv' in payload) {
           const line = {}
-          for (const key of ['multipv', 'pv', 'cp', 'mate']) {
+          for (const key of ['multipv', 'pv', 'cp', 'mate', 'wdl']) {
             line[key] = payload[key]
             delete payload[key]
           }
-          this.cache.pv[line.multipv - 1] = line
+          if (line['multipv'] === undefined) {
+            this.cache.pv[0] = line
+          } else {
+            this.cache.pv[line.multipv - 1] = line
+          }
         }
         Object.assign(this.cache.info, payload)
         break
