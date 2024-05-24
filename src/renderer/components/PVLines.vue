@@ -40,7 +40,7 @@
           @mouseleave="onMouseLeave(id)"
           @click="onClick(line)"
         >
-          <span class="left">{{ line.cpDisplay }}</span>
+          <span class="left">{{ formatEval(line.cpDisplay, line.wdlDisplay) }}</span>
           <span
             class="right"
             @contextmenu.prevent="(currentMove && currentMove.main) || (!currentMove && mainFirstMove) ? $refs.menu1.open($event, { line: line }) : $refs.menu2.open($event, { line: line })"
@@ -235,7 +235,16 @@ export default {
       } else {
         this.updateMultiLines()
       }
-    }
+    },
+    formatEval (cpDisplay, wdlDisplay) {
+      if (cpDisplay && wdlDisplay) {
+        return cpDisplay + " (" + wdlDisplay + ")"
+      } else if (cpDisplay) {
+        return cpDisplay
+      } else {
+        return wdlDisplay
+      }
+    },
   }
 }
 </script>

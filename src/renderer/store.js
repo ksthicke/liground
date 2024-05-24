@@ -55,6 +55,22 @@ function cpToString (cp) {
 }
 
 /**
+ * Make the three integers parts add up to 100.
+ * @param {number[]} intPart integer part
+ * @param {number[]} remainder remainder
+ */
+function addTo100(intPart, remainder) {
+  let newIntPart = intPart.slice()
+  let newRemainder = remainder.slice()
+  while (newIntPart[0] + newIntPart[1] + newIntPart[2] < 100) {
+    let ind = newRemainder.indexOf(Math.max(...newRemainder))
+    newRemainder[ind] = 0
+    newIntPart[ind] = newIntPart[ind] + 1
+  }
+  return newIntPart
+}
+
+/**
  * Check if an option value is valid and emit warnings if necessary.
  * @param {any[]} options Array of engine options
  * @param {string} name Name of option
@@ -366,7 +382,15 @@ export const store = new Vuex.Store({
     multipv (state, payload) {
       for (const pvline of payload) {
         if (pvline) {
-          pvline.cpDisplay = typeof pvline.mate === 'number' ? `#${calcForSide(pvline.mate, state.turn)}` : cpToString(calcForSide(pvline.cp, state.turn))
+          if (pvline.cp || pvline.mate) {
+            pvline.cpDisplay = typeof pvline.mate === 'number' ? `#${calcForSide(pvline.mate, state.turn)}` : cpToString(calcForSide(pvline.cp, state.turn))
+          }
+          if (pvline.wdl) {
+            const intpart = pvline.wdl.map((e) => Math.floor(e/10))
+            const remainder = pvline.wdl.map((e) => e % 10)
+            const percentages = addTo100(intpart, remainder)
+            pvline.wdlDisplay = "W:" + percentages[0] + "% D:" + percentages[1] + "% L:" + percentages[2] + "%"
+          }
         }
       }
       state.multipv = payload
@@ -1035,6 +1059,7 @@ export const store = new Vuex.Store({
             const pvline = {
               cp: payload.cp,
               mate: payload.mate,
+              wdl: payload.wdl,
               pvUCI: payload.pv,
               ucimove
             }
