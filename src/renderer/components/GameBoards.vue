@@ -41,14 +41,24 @@
                   @onMove="showInfo"
                 />
               </div>
-              <EvalBar
+              <div class="evalbars">
+                <EvalBar
                 v-if="QuickTourIndex !== 3"
                 class="evalbar"
-              />
-              <EvalBar
-                v-else
-                class="evalbar-qt"
-              />
+                />
+                <EvalBar
+                  v-else
+                  class="evalbar-qt"
+                />
+                <EvalBarWDL
+                  v-if="QuickTourIndex !== 3"
+                  class="evalbar"
+                />
+                <EvalBarWDL
+                  v-else
+                  class="evalbar-qt"
+                />
+              </div>
             </div>
           </div>
           <div
@@ -130,6 +140,7 @@
 <script>
 import AnalysisView from './AnalysisView'
 import EvalBar from './EvalBar'
+import EvalBarWDL from './EvalBarWDL'
 import ChessGround from './ChessGround'
 import EvalPlot from './EvalPlot'
 import PieceStyleSelector from './PieceStyleSelector'
@@ -146,6 +157,7 @@ export default {
   components: {
     AnalysisView,
     EvalBar,
+    EvalBarWDL,
     ChessGround,
     PieceStyleSelector,
     BoardStyleSelector,
@@ -513,7 +525,7 @@ input {
   display: grid;
   grid-template-areas:
   "gameinfo ."
-  "scrollable evalbar";
+  "scrollable evalbars";
 }
 #chessboard {
   display: inline-block;
@@ -529,13 +541,15 @@ input {
   display: table;
   margin: 0 auto;
 }
+.evalbars {
+  grid-area: evalbars;
+  display: flex;
+}
 .evalbar {
-  grid-area: evalbar;
   margin-left: 8px;
   height: auto;
 }
 .evalbar-qt {
-  grid-area: evalbar;
   margin-left: 8px;
   height: auto;
   border: 3px solid var(--quicktour-highlight);

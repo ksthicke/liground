@@ -58,7 +58,7 @@ export default {
         this.Engines.pop()
       }
       this.counter = 1
-      this.$store.dispatch('engineIndex', this.counter)
+      this.$store.dispatch('numberOfEngines', this.counter)
     },
     resetEngines () {
       let i = 1
@@ -70,13 +70,14 @@ export default {
       if (this.counter > 1) {
         this.counter--
         this.Engines.pop()
-        this.$store.dispatch('engineIndex', this.counter)
+        this.$store.dispatch('numberOfEngines', this.counter)
       }
     },
     addEngine () {
       this.counter++
       this.Engines.push({ Engine: this.counter })
-      this.$store.dispatch('engineIndex', this.counter)
+      console.log(this.Engines)
+      this.$store.dispatch('numberOfEngines', this.counter)
     }
   }
 }

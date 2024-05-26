@@ -190,7 +190,7 @@ export default {
       'engineOptions',
       'engineSettings',
       'selectedEngine',
-      'engineIndex',
+      'numberOfEngines',
       'active'
     ])
   },
@@ -201,7 +201,7 @@ export default {
   },
   methods: {
     changeEngine (event) {
-      if (this.engineIndex < 2) {
+      if (this.numberOfEngines < 2) {
         this.$store.dispatch('changeEngine', event)
       }
     },

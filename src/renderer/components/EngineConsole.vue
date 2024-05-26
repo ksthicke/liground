@@ -186,6 +186,7 @@ export default {
       this.currentlySwitchingVariant = true
     },
     setEngineIndex (payload) {
+      console.log('engineIndex', payload)
       this.engineIndex = payload
     },
     async calculateEngineInfo (payload) {
@@ -213,9 +214,9 @@ export default {
     async initiliseEngineOptions () {
       (async () => {
         // setup debug and error output
-        this.newEngine.on('debug', (...msgs) => console.log('%c[Main Engine] Debug:', 'color: #82aaff; font-weight: 700;', ...msgs))
+        //this.newEngine.on('debug', (...msgs) => console.log('%c[Main Engine] Debug:', 'color: #82aaff; font-weight: 700;', ...msgs))
         this.newEngine.on('error', (...msgs) => console.error('%c[Main Engine]', 'color: #82aaff; font-weight: 700;', ...msgs))
-        this.newEngine.on('eval-debug', (...msgs) => console.log('%c[Eval Engine] Debug:', 'color: #9580ff; font-weight: 700;', ...msgs))
+        //this.newEngine.on('eval-debug', (...msgs) => console.log('%c[Eval Engine] Debug:', 'color: #9580ff; font-weight: 700;', ...msgs))
         this.newEngine.on('eval-error', (...msgs) => console.error('%c[Eval Engine]', 'color: #9580ff; font-weight: 700;', ...msgs))
         // capture engine info
         this.newEngine.on('info', info => this.calculateEngineStats(info))

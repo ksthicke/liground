@@ -61,6 +61,7 @@ export default {
       this.engineIndex = payload
     },
     fillStats (payload) {
+      //console.warn('fillStats', payload)
       this.parentEngineStats = payload
     },
     parse (value) {

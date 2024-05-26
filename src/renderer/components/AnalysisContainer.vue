@@ -189,7 +189,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['active', 'mainFirstMove', 'cpForWhiteStr', 'engineIndex', 'PvE', 'availableEngines', 'currentMove', 'active', 'variant', 'QuickTourIndex']),
+    ...mapGetters(['active', 'mainFirstMove', 'cpForWhiteStr', 'numberOfEngines', 'PvE', 'availableEngines', 'currentMove', 'active', 'variant', 'QuickTourIndex']),
     movesExist () {
       const moves = this.$store.getters.moves
       return moves.length !== 0
@@ -251,12 +251,13 @@ export default {
     }
   },
   mounted () {
+    console.warn('MOUNTED')
     this.currentVariant = this.variant
-    this.engineID = this.engineIndex
+    this.engineID = this.numberOfEngines
     this.$refs.pvlines.currentEngineIndex(this.engineID)
     this.$refs.console.setEngineIndex(this.engineID)
     this.$refs.enginestats.fillID(this.engineID)
-    this.$refs.engineselect.setEngineIndex(this.engineIndex)
+    this.$refs.engineselect.setEngineIndex(this.engineID)
   },
   methods: {
     async resetThisEngine () {

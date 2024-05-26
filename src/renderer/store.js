@@ -121,7 +121,7 @@ const filteredSettings = ['UCI_Variant', 'UCI_Chess960']
 
 export const store = new Vuex.Store({
   state: {
-    engineIndex: 1,
+    numberOfEngines: 1,
     enginesActive: [false],
     initialized: false,
     active: false,
@@ -193,11 +193,6 @@ export const store = new Vuex.Store({
         ucimove: ''
       }
     ],
-    numberOfEngines: [
-      {
-        number: 1
-      }
-    ],
     engineCounter: 1,
     hoveredpv: -1,
     counter: 0,
@@ -234,10 +229,6 @@ export const store = new Vuex.Store({
     clock: null
   },
   mutations: { // sync
-    increaseEngineNumber (state) {
-      state.numberOfEngines.push({ number: 2 })
-      state.engineCounter++
-    },
     curVar960Fen (state, payload) {
       state.curVar960Fen = payload
     },
@@ -247,10 +238,12 @@ export const store = new Vuex.Store({
     fen (state, payload) {
       state.fen = payload
     },
-    engineIndex (state, payload) {
-      state.engineIndex = payload
+    numberOfEngines (state, payload) {
+      console.log('*******numberOfEngines', payload)
+      state.numberOfEngines = payload
     },
     enginesActive (state, payload) {
+      console.log('*******enginesActive', payload)
       state.enginesActive = payload
     },
     startFen (state, payload) {
@@ -365,6 +358,7 @@ export const store = new Vuex.Store({
       state.engineSettings = settings
     },
     engineStats (state, payload) {
+      //console.warn('enginestats', payload)
       state.engineStats = payload
     },
     resetEngineStats (state) {
@@ -813,8 +807,8 @@ export const store = new Vuex.Store({
     PvE (context, payload) {
       context.commit('PvE', payload)
     },
-    engineIndex (context, payload) {
-      context.commit('engineIndex', payload)
+    numberOfEngines (context, payload) {
+      context.commit('numberOfEngines', payload)
     },
     PvEParam (context, payload) {
       context.commit('PvEParam', payload)
@@ -1184,11 +1178,8 @@ export const store = new Vuex.Store({
     }
   },
   getters: {
-    engineNumber (state) {
+    numberOfEngines (state) {
       return state.numberOfEngines
-    },
-    engineIndex (state) {
-      return state.engineIndex
     },
     enginesActive (state) {
       return state.enginesActive
@@ -1382,6 +1373,20 @@ export const store = new Vuex.Store({
         return 1 / (1 + Math.exp(-0.003 * getters.cpForWhite))
       }
     },
+    winPerc (state, getters) {
+      const currentMove = getters.currentMove[0]
+      const { mate } = state.multipv[0]
+      if (typeof mate === 'number') {
+        return (calcForSide(Math.sign(mate), state.turn) + 1) / 2
+      } else if (currentMove && currentMove.name.includes('#')) {
+        return state.turn ? 0 : 1
+      } else {
+        return 1 / (1 + Math.exp(-0.003 * getters.cpForWhite))
+      }
+    },
+    drawPerc (state, getters) {
+
+    },
     message (state) {
       return state.message.toUpperCase()
     },
@@ -1499,9 +1504,9 @@ ffish.onRuntimeInitialized = () => {
 
 (async () => {
   // setup debug and error output
-  engine.on('debug', (...msgs) => console.log('%c[Main Engine] Debug:', 'color: #82aaff; font-weight: 700;', ...msgs))
+  //engine.on('debug', (...msgs) => console.log('%c[Main Engine] Debug:', 'color: #82aaff; font-weight: 700;', ...msgs))
   engine.on('error', (...msgs) => console.error('%c[Main Engine]', 'color: #82aaff; font-weight: 700;', ...msgs))
-  engine.on('eval-debug', (...msgs) => console.log('%c[Eval Engine] Debug:', 'color: #9580ff; font-weight: 700;', ...msgs))
+  //engine.on('eval-debug', (...msgs) => console.log('%c[Eval Engine] Debug:', 'color: #9580ff; font-weight: 700;', ...msgs))
   engine.on('eval-error', (...msgs) => console.error('%c[Eval Engine]', 'color: #9580ff; font-weight: 700;', ...msgs))
 
   // capture engine info
