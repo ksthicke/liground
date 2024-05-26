@@ -121,10 +121,49 @@ const filteredSettings = ['UCI_Variant', 'UCI_Chess960']
 
 export const store = new Vuex.Store({
   state: {
-    numberOfEngines: 1,
-    enginesActive: [false],
-    initialized: false,
+    /**
+     * engines: the engines currently being used for analysis, along with all their properties.
+     * Each entry in the array has the following structure:
+     * {
+     *  engineInfo: {name, author, options}
+     *  engineSettings: {}
+     *  engineStats: {depth, seldepth, nodes, nps, hashfull, tbhits, time}
+     *  multipv: {cp, pv, ucimove, wdl}
+     *  active: Boolean
+     * }
+     */
+
+    engines: [], 
+    // Engine specific:
+    engineInfo: {
+      name: '',
+      author: '',
+      options: []
+    },
+    engineSettings: {},
+    engineStats: {
+      depth: 0,
+      seldepth: 0,
+      nodes: 0,
+      nps: 0,
+      hashfull: 0,
+      tbhits: 0,
+      time: 0
+    },
+    enginetime: 0,
+    clock: null,
+    multipv: [
+      {
+        cp: 0,
+        pv: '',
+        ucimove: ''
+      }
+    ],
     active: false,
+
+    // Not engine specific:
+    numberOfEngines: 1, // number of engine analyses on the screen
+    initialized: false,
     PvE: false,
     PvEParam: 'go movetime 1000',
     PvEValue: 'time',
@@ -159,41 +198,15 @@ export const store = new Vuex.Store({
       Janggi: 'janggi',
       Xiangqi: 'xiangqi',
       Fischerandom: 'fischerandom'
-
     }),
     openedPGN: false,
     QuickTourIndex: 0,
     evalPlotDepth: 20,
     orientation: 'white',
     message: 'hello from Vuex',
-    allEngines,
+    allEngines, // array of all engines installed
     activeEngine: null,
-    selectedEngines: {},
-    engineInfo: {
-      name: '',
-      author: '',
-      options: []
-    },
-    engineSettings: {},
-    listOfEngineStats: [],
-    engineStats: {
-      depth: 0,
-      seldepth: 0,
-      nodes: 0,
-      nps: 0,
-      hashfull: 0,
-      tbhits: 0,
-      time: 0
-    },
-    enginetime: 0,
-    multipv: [
-      {
-        cp: 0,
-        pv: '',
-        ucimove: ''
-      }
-    ],
-    engineCounter: 1,
+    selectedEngines: {}, // engine user has most recently selected for each variant
     hoveredpv: -1,
     counter: 0,
     pieceStyle: 'cburnett',
@@ -226,7 +239,6 @@ export const store = new Vuex.Store({
     shogiVariants: [
       '+ Add Custom', 'shogi'
     ],
-    clock: null
   },
   mutations: { // sync
     curVar960Fen (state, payload) {
@@ -239,12 +251,7 @@ export const store = new Vuex.Store({
       state.fen = payload
     },
     numberOfEngines (state, payload) {
-      console.log('*******numberOfEngines', payload)
       state.numberOfEngines = payload
-    },
-    enginesActive (state, payload) {
-      console.log('*******enginesActive', payload)
-      state.enginesActive = payload
     },
     startFen (state, payload) {
       state.startFen = payload
@@ -337,6 +344,7 @@ export const store = new Vuex.Store({
       // dummy to trigger update in console
     },
     engineInfo (state, payload) {
+      console.warn('engineInfo')
       state.engineInfo = payload
       const settings = {}
       for (const option of payload.options) {
@@ -358,7 +366,7 @@ export const store = new Vuex.Store({
       state.engineSettings = settings
     },
     engineStats (state, payload) {
-      //console.warn('enginestats', payload)
+      console.warn('enginestats', payload)
       state.engineStats = payload
     },
     resetEngineStats (state) {
@@ -420,7 +428,6 @@ export const store = new Vuex.Store({
         }
       } else {
         if (is960) {
-          console.log(state.curVar960Fen)
           state.board = new ffish.Board(state.variant, state.curVar960Fen, true)
         } else {
           state.board = new ffish.Board(state.variant)
@@ -543,6 +550,7 @@ export const store = new Vuex.Store({
       state.moves = payload
     },
     setEngineClock (state) {
+      console.log('setEngineClock')
       state.clock = setInterval(function () { state.enginetime = state.enginetime + 1000 }, 1000)
     },
     resetEngineTime (state) {
@@ -642,7 +650,6 @@ export const store = new Vuex.Store({
       for (const i in payload.line) {
         context.commit('appendMoves', { move: payload.line[i], prev: prev })
         const move = context.getters.getMoveByUCIAndPrev(payload.line[i], prev)[0]
-        console.log(move)
         if (!prev) {
           if (!context.state.mainFirstMove) {
             context.commit('mainFirstMove', move)
@@ -719,9 +726,6 @@ export const store = new Vuex.Store({
     },
     setActiveFalse (context) {
       context.commit('active', false)
-    },
-    enginesActive (context, payload) {
-      context.commit('enginesActive', payload)
     },
     PvEtrue (context) {
       context.commit('PvE', true)
@@ -953,7 +957,6 @@ export const store = new Vuex.Store({
     },
     async changeEngine (context, payload) {
       const id = payload
-
       // always update selected engines
       const selected = {
         ...context.state.selectedEngines,
@@ -1180,9 +1183,6 @@ export const store = new Vuex.Store({
   getters: {
     numberOfEngines (state) {
       return state.numberOfEngines
-    },
-    enginesActive (state) {
-      return state.enginesActive
     },
     currentMove (state) {
       return state.moves.filter(moves => moves.fen === state.fen)
