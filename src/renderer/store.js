@@ -122,17 +122,40 @@ const filteredSettings = ['UCI_Variant', 'UCI_Chess960']
 export const store = new Vuex.Store({
   state: {
     /**
-     * engines: the engines currently being used for analysis, along with all their properties.
+     * engines: The engines currently being used for analysis, along with all their properties.
      * Each entry in the array has the following structure:
      * {
-     *  engineInfo: {name, author, options}
-     *  engineSettings: {}
-     *  engineStats: {depth, seldepth, nodes, nps, hashfull, tbhits, time}
-     *  multipv: {cp, pv, ucimove, wdl}
-     *  active: Boolean
+     *  engineInfo:           // information that the engine outputs about itself
+     *  {
+     *    name,               // name of engine (e.g., Stockfish 12)
+     *    author,             // authors of engine
+     *    options
+     *  },
+     *  engineSettings: {},
+     *  engineStats:          // current statistics output by the engine
+     *  {
+     *    depth,
+     *    seldepth,
+     *    nodes,
+     *    nps,
+     *    hashfull,
+     *    tbhits,
+     *    time
+     *  },
+     *  multipv:              // array that, for each line, holds the current 
+     *                        // information about the calculated line
+     *  [{
+     *    cp,                 // centipawn evaluation
+     *    pv,                 // principle variation
+     *    ucimove,            // uci format of move (e.g., e2e4)
+     *    wdl                 // win/draw/loss per thousand
+     *  }],
+     *  clock: null,          // holds ID for the timer to compute enginetime
+     *  enginetime: <Number>, // used for displaying the time from clock since 
+     *                        // engineStats.time is not always updated every second
+     *  active: <Boolean>     // whether or not the engine is currently turned on
      * }
      */
-
     engines: [], 
     // Engine specific:
     engineInfo: {
@@ -344,7 +367,7 @@ export const store = new Vuex.Store({
       // dummy to trigger update in console
     },
     engineInfo (state, payload) {
-      console.warn('engineInfo')
+      console.warn('engineInfo', payload)
       state.engineInfo = payload
       const settings = {}
       for (const option of payload.options) {
