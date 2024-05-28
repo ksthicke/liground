@@ -19,7 +19,7 @@ export default {
     open (link) {
       this.$electron.shell.openExternal(link)
     }
-  }
+  },
 }
 </script>
 

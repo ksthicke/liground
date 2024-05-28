@@ -122,7 +122,7 @@ const filteredSettings = ['UCI_Variant', 'UCI_Chess960']
 export const store = new Vuex.Store({
   state: {
     /**
-     * engines: The engines currently being used for analysis, along with all their properties.
+     * analysisEngines: The engines currently being used for analysis, along with all their properties.
      * Each entry in the array has the following structure:
      * {
      *  engineInfo:           // information that the engine outputs about itself
@@ -156,7 +156,7 @@ export const store = new Vuex.Store({
      *  active: <Boolean>     // whether or not the engine is currently turned on
      * }
      */
-    engines: [], 
+    analysisEngines: [],
     // Engine specific:
     engineInfo: {
       name: '',
@@ -227,7 +227,7 @@ export const store = new Vuex.Store({
     evalPlotDepth: 20,
     orientation: 'white',
     message: 'hello from Vuex',
-    allEngines, // array of all engines installed
+    allEngines: allEngines, // array of all engines installed
     activeEngine: null,
     selectedEngines: {}, // engine user has most recently selected for each variant
     hoveredpv: -1,
@@ -420,6 +420,13 @@ export const store = new Vuex.Store({
       }
       state.multipv = payload
     },
+    addAnalysisEngine (state) {
+      const newEngine = {}
+      state.analysisEngines.push(newEngine)
+    },
+    removeAnalysisEngine (context, payload) {
+
+    },
     hoveredpv (state, payload) {
       state.hoveredpv = payload
     },
@@ -556,8 +563,8 @@ export const store = new Vuex.Store({
     displayMenu (state, payload) {
       state.displayMenu = payload
     },
-    switchDarkMode (state) {
-      state.darkMode = !state.darkMode
+    setDarkMode (state, payload) {
+      state.darkMode = payload
     },
     switchMuteButton (state) {
       state.muteButton = !state.muteButton
@@ -608,18 +615,14 @@ export const store = new Vuex.Store({
       context.dispatch('setEngineOptions', { UCI_Chess960: payload.is960 })
       context.dispatch('restartEngine')
     },
-    initialize (context) {
-      if (localStorage.evalPlotDepth) {
-        context.state.evalPlotDepth = localStorage.evalPlotDepth
-      }
-      if (localStorage.darkMode) {
-        if (localStorage.darkMode === 'true') {
-          context.commit('switchDarkMode')
-        }
-      }
-      if (localStorage.muteButton) {
-        if (localStorage.muteButton === 'true') {
-          context.commit('switchMuteButton')
+    initializeStore (context) {
+      console.log('initializeStore')
+      if (localStorage.engines) {
+        try {
+          console.log('initialize', (context.state.allEngines))
+          context.state.allEngines = JSON.parse(localStorage.engines)
+        } catch (err) {
+          localStorage.removeItem('engines')
         }
       }
       if (localStorage.internationalPieceStyle) {
@@ -631,13 +634,21 @@ export const store = new Vuex.Store({
       if (localStorage.variant) {
         context.commit('variant', localStorage.variant)
       }
-      if (localStorage.engines) {
-        try {
-          context.state.allEngines = JSON.parse(localStorage.engines)
-        } catch (err) {
-          localStorage.removeItem('engines')
+      if (localStorage.muteButton) {
+        if (localStorage.muteButton === 'true') {
+          context.commit('switchMuteButton')
         }
       }
+      if (localStorage.darkMode) {
+        if (localStorage.darkMode === 'true') {
+          context.commit('setDarkMode', true)
+        }
+      }
+      if (localStorage.evalPlotDepth) {
+        context.state.evalPlotDepth = localStorage.evalPlotDepth
+      }
+    },
+    initialize (context) {
       context.commit('newBoard')
       context.dispatch('updateBoard')
       context.dispatch('changeEngine', context.getters.availableEngines[0].name)
@@ -904,6 +915,7 @@ export const store = new Vuex.Store({
       context.dispatch('setEngineOptions', { UCI_Chess960: payload.is960 })
     },
     async addEngine (context, payload) {
+      console.log('addEngine', payload)
       // discover the variants by running the engine
       const { name, binary, cwd, logo } = payload
       const info = await engine.run(binary, cwd)
@@ -923,6 +935,7 @@ export const store = new Vuex.Store({
       await context.dispatch('initEngineOptions')
     },
     async editEngine (context, payload) {
+      console.log('editEngine', payload)
       const { old, changed: { name, binary, cwd, logo } } = payload
       const engines = { ...context.state.allEngines }
 
@@ -965,6 +978,7 @@ export const store = new Vuex.Store({
       localStorage.engines = JSON.stringify(context.state.allEngines)
     },
     async deleteEngine (context, payload) {
+      console.log('deleteEngine', payload)
       const engines = { ...context.state.allEngines }
       delete engines[payload]
       const missing = Object.entries(context.state.variantOptions.getAll())
@@ -979,6 +993,7 @@ export const store = new Vuex.Store({
       await context.dispatch('changeEngine', context.getters.availableEngines[0].name)
     },
     async changeEngine (context, payload) {
+      console.warn('changeEngine', payload)
       const id = payload
       // always update selected engines
       const selected = {
@@ -997,6 +1012,7 @@ export const store = new Vuex.Store({
       }
     },
     async runBinary (context, payload) {
+      console.log('runBinary', payload)
       const { binary, cwd } = payload
       if (context.getters.active) {
         context.commit('active', false)
@@ -1007,6 +1023,7 @@ export const store = new Vuex.Store({
       await context.dispatch('initEngineOptions')
     },
     initEngineOptions (context) {
+      console.log('initEngineOptions', context.state.activeEngine)
       const options = {
         // variant & 960 are handled separately and always set
         UCI_Variant: context.getters.variant,
@@ -1042,6 +1059,12 @@ export const store = new Vuex.Store({
         }
       }
       localStorage.setItem('engine' + context.state.activeEngine, JSON.stringify(context.state.engineSettings))
+    },
+    addAnalysisEngine (context) {
+      context.commit('addAnalysisEngine')
+    },
+    removeAnalysisEngine (context, payload) {
+
     },
     idName (context, payload) {
       context.commit('idName', payload)
@@ -1181,8 +1204,8 @@ export const store = new Vuex.Store({
     displayMenu (context, payload) {
       context.commit('displayMenu', payload)
     },
-    switchDarkMode (context) {
-      context.commit('switchDarkMode')
+    setDarkMode (context, payload) {
+      context.commit('setDarkMode', payload)
     },
     quicktourIndexIncr (context) {
       context.commit('quicktourIndexIncr')
@@ -1522,6 +1545,7 @@ export const store = new Vuex.Store({
 })
 
 ffish.onRuntimeInitialized = () => {
+  console.log('initialed', (store.state.allEngines))
   store.dispatch('initialize')
 }
 

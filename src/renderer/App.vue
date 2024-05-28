@@ -1,12 +1,20 @@
 <template>
-  <div id="app">
+  <div id="app" :class="[ this.darkMode ? 'darkMode' : 'lightMode' ]">
     <RouterView />
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
-  name: 'App'
+  name: 'App',
+  beforeCreate () {
+    this.$store.dispatch('initializeStore')
+  },
+  computed: {
+    ...mapGetters(['darkMode'])
+  }
 }
 </script>
 

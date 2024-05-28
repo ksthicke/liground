@@ -51,6 +51,9 @@ export default {
       counter: 1
     }
   },
+  beforeMount () {
+    //this.addEngine()
+  },
   methods: {
     removeAllEngines () {
       let i = this.counter
@@ -70,6 +73,7 @@ export default {
       if (this.counter > 1) {
         this.counter--
         this.Engines.pop()
+        this.$store.dispatch('removeAnalysisEngine')
         this.$store.dispatch('numberOfEngines', this.counter)
       }
     },
@@ -77,6 +81,7 @@ export default {
       this.counter++
       this.Engines.push({ Engine: this.counter })
       console.log(this.Engines)
+      //this.$store.dispatch('addAnalysisEngine')
       this.$store.dispatch('numberOfEngines', this.counter)
     }
   }

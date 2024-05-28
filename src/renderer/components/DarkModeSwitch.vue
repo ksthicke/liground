@@ -18,69 +18,9 @@ export default {
   computed: {
     ...mapGetters(['darkMode'])
   },
-  watch: {
-    darkMode () {
-      if (this.darkMode === true) {
-        /*  Darkmode -  Design: */
-        document.documentElement.style.setProperty('--main-bg-color', '#35383d')
-        document.documentElement.style.setProperty('--second-bg-color', '#40434a')
-        document.documentElement.style.setProperty('--main-text-color', '#99aab5')
-        document.documentElement.style.setProperty('--main-border-color', '#99aab5')
-        document.documentElement.style.setProperty('--scroll-track-color', '#32363b')
-        document.documentElement.style.setProperty('--scroll-thumb-color', '#23272a')
-        document.documentElement.style.setProperty('--variation-color', '#99aab5')
-        document.documentElement.style.setProperty('--tooltip-color', '#40434a')
-        document.documentElement.style.setProperty('--button-color', '#535a6e')
-        document.documentElement.style.setProperty('--hover-color', '#99aab5')
-        document.documentElement.style.setProperty('--highlight-color', '#7289da')
-        document.documentElement.style.setProperty('--hover-highlight-color', '#7289da')
-        document.documentElement.style.setProperty('--dark-highlight-color', '#4362ce')
-        document.documentElement.style.setProperty('--menubar-activetab-color', '#99aab5')
-        document.documentElement.style.setProperty('--save-btn-color', '#7289da')
-        document.documentElement.style.setProperty('--cancel-btn-color', '#8f3f43')
-        document.documentElement.style.setProperty('--save-btn-hover', '#9aabe5')
-        document.documentElement.style.setProperty('--cancel-btn-hover', '#9a5255')
-        document.documentElement.style.setProperty('--quicktour-highlight', '#99ccff')
-        document.documentElement.style.setProperty('--tab-header-color', '#7289da')
-
-        /* original dark mode:
-        document.documentElement.style.setProperty('--main-bg-color', '#222326')
-        document.documentElement.style.setProperty('--second-bg-color', '#4b4e54')
-        document.documentElement.style.setProperty('--main-text-color', 'lightgrey')
-        document.documentElement.style.setProperty('--main-border-color', '#888')
-        document.documentElement.style.setProperty('--scroll-track-color', '#4b4e54')
-        document.documentElement.style.setProperty('--scroll-thumb-color', '#222326')
-        document.documentElement.style.setProperty('--variation-color', '#4b4e54')
-        document.documentElement.style.setProperty('--tooltip-color', '#4b4e54')
-        */
-      } else {
-        /* Revert to Light-Mode: */
-        document.documentElement.style.setProperty('--main-bg-color', 'white')
-        document.documentElement.style.setProperty('--second-bg-color', '#f1f1f1')
-        document.documentElement.style.setProperty('--main-text-color', '#131310')
-        document.documentElement.style.setProperty('--main-border-color', '#131310')
-        document.documentElement.style.setProperty('--scroll-track-color', 'lightgrey')
-        document.documentElement.style.setProperty('--scroll-thumb-color', 'grey')
-        document.documentElement.style.setProperty('--variation-color', 'lightgrey')
-        document.documentElement.style.setProperty('--tooltip-color', 'lightgrey')
-        document.documentElement.style.setProperty('--button-color', '#4f6a8e')
-        document.documentElement.style.setProperty('--hover-color', '#7287a4')
-        document.documentElement.style.setProperty('--highlight-color', '#7289da')
-        document.documentElement.style.setProperty('--hover-highlight-color', '#7289da')
-        document.documentElement.style.setProperty('--dark-highlight-color', '#7289da')
-        document.documentElement.style.setProperty('--menubar-activetab-color', '#7ec8ba')
-        document.documentElement.style.setProperty('--save-btn-color', '#7ec8ba')
-        document.documentElement.style.setProperty('--cancel-btn-color', '#c72634')
-        document.documentElement.style.setProperty('--save-btn-hover', '#9aabe5')
-        document.documentElement.style.setProperty('--cancel-btn-hover', '#9a5255')
-        document.documentElement.style.setProperty('--quicktour-highlight', '#F47174')
-        document.documentElement.style.setProperty('--tab-header-color', '#7ec8ba')
-      }
-    }
-  },
   methods: {
-    onClick () {
-      this.$store.dispatch('switchDarkMode')
+    onClick (event) {
+      this.$store.dispatch('setDarkMode', event.target.checked)
     }
   }
 }

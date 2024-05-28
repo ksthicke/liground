@@ -290,6 +290,7 @@ export default {
       this.$emit('calculateMultiPV', this.multiPV)
     },
     async changeBinary (event) {
+      console.log('EngineConsole.vue: changeBinary')
       if (this.engineIndex !== 1) {
         if (this.newEngine != null) {
           this.engineActive = false

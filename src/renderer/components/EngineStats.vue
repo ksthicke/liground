@@ -5,6 +5,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import VueTableDynamic from 'vue-table-dynamic'
 
 export default {
@@ -23,18 +24,40 @@ export default {
         tbhits: 0,
         enginetime: 0
       },
-      engineIndex: 1
+      engineID: 1
     }
   },
 
   computed: {
+    ...mapGetters(['seldepth', 'nps', 'nodes', 'enginetime', 'hashfull', 'tbhits']),
+    depth () {
+      return this.$store.getters.depth
+    },
+    seldepth () {
+      return this.$store.getters.seldepth
+    },
+    nps () {
+      return this.$store.getters.nps
+    },
+    nodes () {
+      return this.$store.getters.nodes
+    },
+    enginetime () {
+      return this.$store.getters.enginetime
+    },
+    hashfull () {
+      return this.$store.getters.hashfull
+    },
+    tbhits () {
+      return this.$store.getters.tbhits
+    },
+
     params () {
-      if (this.engineIndex === 1) {
-        const { depth, seldepth, nps, nodes, enginetime, hashfull, tbhits } = this.$store.getters
+      if (this.engineID === 1) {
         return {
           data: [
             ['Depth / Sel. Depth', 'Nodes/s', 'Nodes', 'Time', 'Hash', 'TB Hits'],
-            [depth + ' / ' + seldepth, this.parse(nps) + 'nps', this.parse(nodes), this.parseTime(enginetime), hashfull, this.parse(tbhits)]
+            [this.depth + ' / ' + this.seldepth, this.parse(this.nps) + 'nps', this.parse(this.nodes), this.parseTime(this.enginetime), this.hashfull, this.parse(this.tbhits)]
           ],
           columnWidth: [{ column: 0, width: 150 }],
           header: 'row',
@@ -58,10 +81,10 @@ export default {
   },
   methods: {
     fillID (payload) {
-      this.engineIndex = payload
+      this.engineID = payload
     },
     fillStats (payload) {
-      //console.warn('fillStats', payload)
+      console.warn('fillStats', payload)
       this.parentEngineStats = payload
     },
     parse (value) {
