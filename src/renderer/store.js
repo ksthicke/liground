@@ -186,7 +186,7 @@ export const store = new Vuex.Store({
 
     // Not engine specific:
     numberOfEngines: 1, // number of engine analyses on the screen
-    initialized: false,
+    initialized: false, // whether or not the board has been initialized
     PvE: false,
     PvEParam: 'go movetime 1000',
     PvEValue: 'time',
@@ -616,10 +616,8 @@ export const store = new Vuex.Store({
       context.dispatch('restartEngine')
     },
     initializeStore (context) {
-      console.log('initializeStore')
       if (localStorage.engines) {
         try {
-          console.log('initialize', (context.state.allEngines))
           context.state.allEngines = JSON.parse(localStorage.engines)
         } catch (err) {
           localStorage.removeItem('engines')
@@ -648,7 +646,7 @@ export const store = new Vuex.Store({
         context.state.evalPlotDepth = localStorage.evalPlotDepth
       }
     },
-    initialize (context) {
+    initializeBoard (context) {
       context.commit('newBoard')
       context.dispatch('updateBoard')
       context.dispatch('changeEngine', context.getters.availableEngines[0].name)
@@ -1546,7 +1544,7 @@ export const store = new Vuex.Store({
 
 ffish.onRuntimeInitialized = () => {
   console.log('initialed', (store.state.allEngines))
-  store.dispatch('initialize')
+  store.dispatch('initializeBoard')
 }
 
 (async () => {
