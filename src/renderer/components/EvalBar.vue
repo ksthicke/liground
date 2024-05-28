@@ -26,7 +26,7 @@ export default {
   position: relative;
   width: 17px;
   height: 600px;
-  background: var(--light-text-color);;
+  background: var(--light-text-color);
   border: 1px solid #888;
   border-radius: 5px;
   overflow: hidden;

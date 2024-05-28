@@ -1,8 +1,8 @@
 .lightMode {
     --main-bg-color: white;
     --second-bg-color: #f1f1f1;
-    --main-text-color:  #131310; 
-    --second-text-color:  #131310;
+    --main-text-color: #131310; 
+    --second-text-color: #131310;
     --light-text-color: #fff; 
     --main-border-color: #131310;
     --scroll-track-color: lightgrey;
@@ -29,21 +29,25 @@
     --main-bg-color: #35383d;
     --second-bg-color: #40434a;
     --main-text-color: #99aab5;
+    --second-text-color: #131310;
+    --light-text-color: #fff; 
     --main-border-color: #99aab5;
     --scroll-track-color: #32363b;
     --scroll-thumb-color: #23272a;
     --variation-color: #99aab5;
-    --tooltip-color: #40434a;
     --button-color: #535a6e;
+    --tooltip-color: #40434a;
     --hover-color: #99aab5;
+    --save-btn-color: #7289da;
+    --save-btn-hover: #9aabe5;
+    --cancel-btn-color: #8f3f43;
+    --cancel-btn-hover: #9a5255;
+    --tab-btn-color:  #333; /* About-Tab */
+    --tab-header-color: #7289da;
     --highlight-color: #7289da;
     --hover-highlight-color: #7289da;
     --dark-highlight-color: #4362ce;
     --menubar-activetab-color: #99aab5;
-    --save-btn-color: #7289da;
-    --cancel-btn-color: #8f3f43;
-    --save-btn-hover: #9aabe5;
-    --cancel-btn-hover: #9a5255;
+    --eval-line-color: #ff4400;
     --quicktour-highlight: #99ccff;
-    --tab-header-color: #7289da;
 }
