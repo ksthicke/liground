@@ -115,7 +115,6 @@
         ref="console"
         @reInitEngineOptions="changeState"
         @calculateEngineStats="fillEngineStats($event)"
-        @calculateEngineInfo="fillEngineInfo($event)"
         @calculateMultiPV="fillMultiPV($event)"
         @sendMultiPvCount="fillMultiPVCount($event)"
       />
@@ -125,7 +124,6 @@
         ref="console"
         @reInitEngineOptions="changeState"
         @calculateEngineStats="fillEngineStats($event)"
-        @calculateEngineInfo="fillEngineInfo($event)"
         @calculateMultiPV="fillMultiPV($event)"
         @sendMultiPvCount="fillMultiPVCount($event)"
       />
@@ -273,10 +271,6 @@ export default {
     fillMultiPV (event) {
       this.multipv = event
       this.$refs.pvlines.fillPV(this.multipv)
-    },
-    fillEngineInfo (event) {
-      this.engineInfo = event
-      this.$refs.pvlines.fillInfo(this.engineInfo)
     },
     fillEngineStats (event) {
       this.engineStats = event

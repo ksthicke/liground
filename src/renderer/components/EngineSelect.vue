@@ -17,7 +17,6 @@
       :allow-empty="false"
       :show-labels="false"
       :placeholder="selected.name"
-      @change="sendSelected"
     />
   </div>
 </template>
@@ -33,7 +32,7 @@ export default {
   data () {
     return {
       selected: null,
-      engineIndex: 1 // this will be set on created
+      engineID: 1 // this will be set on created
     }
   },
   computed: {
@@ -44,13 +43,14 @@ export default {
   },
   watch: {
     selected () {
-      if (this.engineIndex < 2) {
+      console.log('EngineSelect', this.engineID, this.selected, this.$store.state.allEngines)
+      if (this.engineID < 2) {
         this.$store.dispatch('changeEngine', this.selected.name)
       }
       this.sendSelected()
     },
     selectedEngine () {
-      if (this.engineIndex < 2) {
+      if (this.engineID < 2) {
         this.selected = this.selectedEngine
       }
     }
@@ -60,10 +60,14 @@ export default {
   },
   methods: {
     setEngineIndex (payload) {
-      this.engineIndex = payload
+      this.engineID = payload
     },
     sendSelected () {
       this.$emit('sendSelected', this.selected.name)
+      // new
+      if (this.selected.name !== null) {
+        this.$store.dispatch('changeAnalysisEngine', {name: this.selected.name, engineID: this.engineID})
+      }
     }
   }
 }

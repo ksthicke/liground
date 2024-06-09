@@ -104,7 +104,7 @@ export default {
           ucimove: ''
         }
       ],
-      currentEngine: 1,
+      engineID: 1,
       pvcount: 0,
       originalMultiPV: 1,
       showOnlyOnePvLine: false, // Flag to show only one PvLine
@@ -114,14 +114,9 @@ export default {
   },
   computed: {
     engineDetails () {
-      if (this.currentEngine === 1) {
-        const { engineName, engineAuthor } = this.$store.getters
-        return `"${engineName}" ${engineAuthor ? 'by ' + engineAuthor : ''}`
-      } else {
-        const engineName = this.engineInfo.name
-        const engineAuthor = this.engineInfo.author
-        return `"${engineName}" ${engineAuthor ? 'by ' + engineAuthor : ''}`
-      }
+      const engineAuthor = this.engineAuthor(this.engineID)
+      const engineName = this.engineName(this.engineID)
+      return `"${engineName}" ${engineAuthor ? 'by ' + engineAuthor : ''}`
     },
     currentMove () {
       for (let num = 0; num < this.moves.length; num++) {
@@ -131,7 +126,7 @@ export default {
       }
       return null
     },
-    ...mapGetters(['moves', 'fen', 'multipv', 'engineSettings', 'mainFirstMove', 'PvE', 'active', 'turn', 'enginetime', 'PvEValue', 'PvEParam', 'PvEInput', 'nodes', 'depth', 'seldepth'])
+    ...mapGetters(['moves', 'fen', 'multipv', 'engineSettings', 'mainFirstMove', 'PvE', 'active', 'turn', 'enginetime', 'PvEValue', 'PvEParam', 'PvEInput', 'nodes', 'depth', 'seldepth', 'engineAuthor', 'engineName'])
   },
   watch: {
     pvcount () {
@@ -176,13 +171,10 @@ export default {
       this.originalMultiPV = payload
     },
     currentEngineIndex (payload) {
-      this.currentEngine = payload
+      this.engineID = payload
     },
     fillPV (payload) {
       this.multipvMulti = payload
-    },
-    fillInfo (payload) {
-      this.engineInfo = payload
     },
     asMain (target, data) {
       const mainLine = data.line.pvUCI.split(' ')
@@ -207,7 +199,7 @@ export default {
       this.$store.dispatch('push', { move: line.ucimove, prev: prevMov })
     },
     updateLines () {
-      if (this.currentEngine === 1) {
+      if (this.engineID === 1) {
         const count = this.engineSettings.MultiPV
         const lines = this.multipv.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
         this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
@@ -217,7 +209,7 @@ export default {
       }
     },
     updateMultiLines () {
-      if (this.currentEngine !== 1) {
+      if (this.engineID !== 1) {
         const count = this.pvcount
         const lines = this.multipvMulti.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
         this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
@@ -230,7 +222,7 @@ export default {
       this.showExpandIcon = !this.showExpandIcon
       this.showMinimizeIcon = !this.showMinimizeIcon
       this.showOnlyOnePvLine = !this.showOnlyOnePvLine
-      if (this.currentEngine === 1) {
+      if (this.engineID === 1) {
         this.updateLines()
       } else {
         this.updateMultiLines()

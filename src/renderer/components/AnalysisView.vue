@@ -43,16 +43,12 @@ export default {
   },
   data () {
     return {
-      Engines: [
-        {
-          number: 1
-        }
-      ],
-      counter: 1
+      Engines: [],
+      counter: 0
     }
   },
   beforeMount () {
-    //this.addEngine()
+    this.addEngine()
   },
   methods: {
     removeAllEngines () {
@@ -81,7 +77,7 @@ export default {
       this.counter++
       this.Engines.push({ Engine: this.counter })
       console.log(this.Engines)
-      //this.$store.dispatch('addAnalysisEngine')
+      this.$store.dispatch('addAnalysisEngine')
       this.$store.dispatch('numberOfEngines', this.counter)
     }
   }

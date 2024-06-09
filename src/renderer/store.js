@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import ffish from 'ffish'
-import { engine } from './engine'
+import { Engine, engine } from './engine'
 import allEngines from './store/engines'
 
 import moveAudio from './assets/audio/Move.mp3'
@@ -125,6 +125,7 @@ export const store = new Vuex.Store({
      * analysisEngines: The engines currently being used for analysis, along with all their properties.
      * Each entry in the array has the following structure:
      * {
+     *  engine,               // the Engine object for this analysis engine
      *  engineInfo:           // information that the engine outputs about itself
      *  {
      *    name,               // name of engine (e.g., Stockfish 12)
@@ -388,6 +389,12 @@ export const store = new Vuex.Store({
       }
       state.engineSettings = settings
     },
+    setEngineInfo (state, payload) {
+      const { engineID, engineInfo } = payload
+      console.log(engineInfo)
+      state.analysisEngines[engineID-1].engineInfo = engineInfo
+      console.log(JSON.stringify(state.analysisEngines, null, 4))
+    },
     engineStats (state, payload) {
       console.warn('enginestats', payload)
       state.engineStats = payload
@@ -420,11 +427,41 @@ export const store = new Vuex.Store({
       }
       state.multipv = payload
     },
+    setEngineOption (state, payload) {
+      const { engineID, name, value } = payload
+      Vue.set(state.analysisEngines[engineID-1].engineSettings, name, value)
+      console.log('setEngineOption', state.analysisEngines[engineID-1].engineSettings)
+    },
     addAnalysisEngine (state) {
-      const newEngine = {}
+      const newEngine = {
+        engine: new Engine(),
+        engineInfo: {
+          name: '',
+          author: '',
+          options: []
+        },
+        engineSettings: {},
+        engineStats: {
+          depth: 0,
+          seldepth: 0,
+          nodes: 0,
+          nps: 0,
+          hashfull: 0,
+          tbhits: 0,
+          time: 0
+        },
+        multipv: [],
+        clock: null,
+        enginetime: 0,
+        active: false
+      }
       state.analysisEngines.push(newEngine)
+      console.log(state.analysisEngines[0])
     },
     removeAnalysisEngine (context, payload) {
+      state.analysisEngines.pop()
+    },
+    changeAnalysisEngine (context, payload) {
 
     },
     hoveredpv (state, payload) {
@@ -1039,30 +1076,65 @@ export const store = new Vuex.Store({
       context.dispatch('setEngineOptions', options)
     },
     setEngineOptions (context, payload) {
-      if (context.getters.active && !context.getters.PvE) {
-        context.dispatch('stopEngine')
-      } else if (context.getters.active && context.getters.PvE && !context.getters.turn) {
-        context.dispatch('stopEngine')
-      }
-      context.dispatch('resetEngineData')
-      for (const [name, value] of Object.entries(payload)) {
-        checkOption(context.state.engineInfo.options, name, value)
-        if (value !== undefined && value !== null) {
-          if (!filteredSettings.includes(name)) {
-            context.state.engineSettings[name] = value
-          }
-          engine.send(`setoption name ${name} value ${value}`)
-        } else {
-          engine.send(`setoption name ${name}`)
+      if (payload.engineID) {
+        const engineID = payload.engineID
+        delete payload.engineID
+        const engine = context.state.analysisEngines[engineID-1]
+        if (engine.active) {
+          context.dispatch('stopEngine')
         }
+        context.dispatch('resetEngineData')
+        for (const [name, value] of Object.entries(payload)) {
+          checkOption(engine.engineInfo.options, name, value)
+          if (value !== undefined && value !== null) {
+            if (!filteredSettings.includes(name)) {
+              this.commit('setEngineOption', { engineID, name, value })
+              context.state.engineSettings[name] = value
+            }
+            engine.send(`setoption name ${name} value ${value}`)
+          } else {
+            engine.send(`setoption name ${name}`)
+          }
+        }
+        localStorage.setItem('engine' + context.state.activeEngine, JSON.stringify(context.state.engineSettings))
+      } else { // old code, delete below
+        if (context.getters.active && !context.getters.PvE) {
+          context.dispatch('stopEngine')
+        } else if (context.getters.active && context.getters.PvE && !context.getters.turn) {
+          context.dispatch('stopEngine')
+        }
+        context.dispatch('resetEngineData')
+        for (const [name, value] of Object.entries(payload)) {
+          checkOption(context.state.engineInfo.options, name, value)
+          if (value !== undefined && value !== null) {
+            if (!filteredSettings.includes(name)) {
+              context.state.engineSettings[name] = value
+            }
+            engine.send(`setoption name ${name} value ${value}`)
+          } else {
+            engine.send(`setoption name ${name}`)
+          }
+        }
+        localStorage.setItem('engine' + context.state.activeEngine, JSON.stringify(context.state.engineSettings))
       }
-      localStorage.setItem('engine' + context.state.activeEngine, JSON.stringify(context.state.engineSettings))
     },
     addAnalysisEngine (context) {
       context.commit('addAnalysisEngine')
     },
     removeAnalysisEngine (context, payload) {
-
+      context.commit('removeAnalysisEngine')
+    },
+    async changeAnalysisEngine (context, payload) {
+      const { name, engineID } = payload
+      let index = 0
+      const availableEngines = context.getters.availableEngines
+      for (index; index < availableEngines.length; index++) {
+        if (availableEngines[index].name === name) {
+          break
+        }
+      }
+      const engineInfo = await context.state.analysisEngines[engineID-1].engine.run(availableEngines[index].binary, availableEngines[index].cwd)
+      context.commit('setEngineInfo', { engineInfo, engineID })
     },
     idName (context, payload) {
       context.commit('idName', payload)
@@ -1325,10 +1397,10 @@ export const store = new Vuex.Store({
       return getters.selectedEngine.binary
     },
     engineName (state) {
-      return state.engineInfo.name
+      return (engineID) => state.analysisEngines[engineID-1].engineInfo.name
     },
     engineAuthor (state) {
-      return state.engineInfo.author
+      return (engineID) => state.analysisEngines[engineID-1].engineInfo.author
     },
     engineOptions (state) {
       return state.engineInfo.options.filter(({ name }) => !filteredSettings.includes(name))
@@ -1543,7 +1615,7 @@ export const store = new Vuex.Store({
 })
 
 ffish.onRuntimeInitialized = () => {
-  console.log('initialed', (store.state.allEngines))
+  console.log('allEngines', store.state.allEngines)
   store.dispatch('initializeBoard')
 }
 
