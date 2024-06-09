@@ -47,12 +47,7 @@
     <div class="analysis">
       <!-- <AnalysisEvalRow /> -->
       <EngineStats
-        v-if="QuickTourIndex !== 11"
-        ref="enginestats"
-      />
-      <EngineStats
-        v-else
-        id="EngineStats-qt"
+        :class="(QuickTourIndex == 11) ? 'EngineStats-qt' : ''"
         ref="enginestats"
       />
       <div
@@ -60,18 +55,11 @@
         :class="{ animate: isEngineActive }"
       />
       <PVLines
-        v-if="QuickTourIndex !== 12"
         ref="pvlines"
-        class="panel"
-      />
-      <PVLines
-        v-else
-        ref="pvlines"
-        class="panel-qt"
+        :class="(QuickTourIndex == 12) ? 'panel-qt' : 'panel'"
       />
       <div
-        v-if="QuickTourIndex !== 13"
-        class="game-window panel noselect"
+        :class="(QuickTourIndex == 13) ? 'game-window-qt' : 'game-window panel noselect'"
       >
         <div id="move-history">
           <MoveHistoryNode
@@ -80,30 +68,8 @@
           />
         </div>
       </div>
-      <div
-        v-else
-        class="game-window-qt"
-      >
-        <div
-          id="move-history"
-        >
-          <MoveHistoryNode
-            v-if="movesExist"
-            :move="mainFirstMove"
-          />
-        </div>
-      </div>
       <JumpButtons
-        v-if="QuickTourIndex !== 14"
-        @flip-board="$emit('flip-board', 0)"
-        @move-to-start="$emit('move-to-start', 0)"
-        @move-back-one="$emit('move-back-one', 0)"
-        @move-forward-one="$emit('move-forward-one', 0)"
-        @move-to-end="$emit('move-to-end', 0)"
-      />
-      <JumpButtons
-        v-else
-        id="JumpButtons-qt"
+        :class="(QuickTourIndex == 14) ? 'JumpButtons-qt' : ''"
         @flip-board="$emit('flip-board', 0)"
         @move-to-start="$emit('move-to-start', 0)"
         @move-back-one="$emit('move-back-one', 0)"
@@ -111,17 +77,8 @@
         @move-to-end="$emit('move-to-end', 0)"
       />
       <EngineConsole
-        v-if="QuickTourIndex !== 16"
         ref="console"
-        @reInitEngineOptions="changeState"
-        @calculateEngineStats="fillEngineStats($event)"
-        @calculateMultiPV="fillMultiPV($event)"
-        @sendMultiPvCount="fillMultiPVCount($event)"
-      />
-      <EngineConsole
-        v-else
-        id="EngineConsole-qt"
-        ref="console"
+        :class="(QuickTourIndex == 16) ? 'EngineConsole-qt' : ''"
         @reInitEngineOptions="changeState"
         @calculateEngineStats="fillEngineStats($event)"
         @calculateMultiPV="fillMultiPV($event)"
@@ -171,11 +128,6 @@ export default {
         tbhits: 0,
         enginetime: 0
       },
-      engineInfo: {
-        name: '',
-        author: '',
-        options: []
-      },
       multipv: [
         {
           cp: 0,
@@ -187,7 +139,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['active', 'mainFirstMove', 'cpForWhiteStr', 'numberOfEngines', 'PvE', 'availableEngines', 'currentMove', 'active', 'variant', 'QuickTourIndex']),
+    ...mapGetters(['active', 'mainFirstMove', 'cpForWhiteStr', 'numberOfEngines', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
     movesExist () {
       const moves = this.$store.getters.moves
       return moves.length !== 0
@@ -255,6 +207,7 @@ export default {
     this.$refs.pvlines.currentEngineIndex(this.engineID)
     this.$refs.console.setEngineIndex(this.engineID)
     this.$refs.enginestats.fillID(this.engineID)
+    //this.$refs.
     this.$refs.engineselect.setEngineIndex(this.engineID)
   },
   methods: {
@@ -330,7 +283,7 @@ export default {
 input {
   font-size: 11pt;
 }
-#EngineStats-qt{
+.EngineStats-qt{
   border: 5px solid var(--quicktour-highlight);
 }
 .game-window {
@@ -344,7 +297,7 @@ input {
   background-color: var(--second-bg-color);
   border: 5px solid var(--quicktour-highlight);
 }
-#JumpButtons-qt {
+.JumpButtons-qt {
   border: 5px solid var(--quicktour-highlight);
 }
 .panel {
@@ -408,21 +361,7 @@ input {
     background-position: 100000px 0;
   }
 }
-#gameinfo {
-  height: auto;
-  margin: 1em 0em;
-  border: 1px solid var(--main-border-color);
-  border-radius: 5px;
-  background-color: var(--second-bg-color);
-}
-#gameinfo-qt {
-  height: auto;
-  margin: 1em 0em;
-  border: 5px solid var(--quicktour-highlight);
-  border-radius: 5px;
-  background-color: var(--second-bg-color);
-}
-#EngineConsole-qt {
+.EngineConsole-qt {
   border: 5px solid var(--quicktour-highlight);
 }
 #move-history {

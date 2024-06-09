@@ -148,7 +148,7 @@ export const store = new Vuex.Store({
      *  [{
      *    cp,                 // centipawn evaluation
      *    pv,                 // principle variation
-     *    ucimove,            // uci format of move (e.g., e2e4)
+     *    ucimove,            // uci format of next move (e.g., e2e4)
      *    wdl                 // win/draw/loss per thousand
      *  }],
      *  clock: null,          // holds ID for the timer to compute enginetime

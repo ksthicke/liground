@@ -92,11 +92,6 @@ export default {
   data () {
     return {
       lines: [],
-      engineInfo: {
-        name: '',
-        author: '',
-        options: []
-      },
       multipvMulti: [
         {
           cp: 0,
