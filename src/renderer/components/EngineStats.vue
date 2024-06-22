@@ -10,6 +10,9 @@ import VueTableDynamic from 'vue-table-dynamic'
 
 export default {
   name: 'EngineStats',
+  props: {
+    engineID: Number
+  },
   components: {
     VueTableDynamic
   },
@@ -23,8 +26,7 @@ export default {
         hashfull: 0,
         tbhits: 0,
         enginetime: 0
-      },
-      engineID: 1
+      }
     }
   },
 
@@ -80,9 +82,6 @@ export default {
     }
   },
   methods: {
-    fillID (payload) {
-      this.engineID = payload
-    },
     fillStats (payload) {
       console.warn('fillStats', payload)
       this.parentEngineStats = payload

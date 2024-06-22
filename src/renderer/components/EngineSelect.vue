@@ -28,11 +28,13 @@ import defaultLogo from '../assets/images/engines/chess_engine.svg'
 
 export default {
   name: 'EngineSelect',
+  props: {
+    engineID: Number
+  },
   components: { Multiselect },
   data () {
     return {
       selected: null,
-      engineID: 1 // this will be set on created
     }
   },
   computed: {
@@ -59,9 +61,6 @@ export default {
     this.selected = this.selectedEngine
   },
   methods: {
-    setEngineIndex (payload) {
-      this.engineID = payload
-    },
     sendSelected () {
       this.$emit('sendSelected', this.selected.name)
       // new

@@ -209,13 +209,7 @@ export default {
     }
   },
   mounted () {
-    console.warn('MOUNTED', this.engineID)
     this.currentVariant = this.variant
-    this.$refs.pvlines.currentEngineIndex(this.engineID)
-    this.$refs.console.setEngineIndex(this.engineID)
-    this.$refs.enginestats.fillID(this.engineID)
-    //this.$refs.
-    this.$refs.engineselect.setEngineIndex(this.engineID)
   },
   methods: {
     async resetThisEngine () {

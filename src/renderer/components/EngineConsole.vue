@@ -66,6 +66,7 @@ import { Engine, engine } from '../engine'
 export default {
   name: 'EngineConsole',
   props: {
+    engineID: Number,
     bufferSize: {
       type: Number,
       default: 10
@@ -108,7 +109,6 @@ export default {
           ucimove: ''
         }
       ],
-      engineID: 1,
       enginesettings: {},
       filteredSettings: ['UCI_Variant', 'UCI_Chess960'],
       engineName: null,
@@ -184,10 +184,6 @@ export default {
       this.resetEngineData()
       this.newEngine.send('quit')
       this.currentlySwitchingVariant = true
-    },
-    setEngineIndex (payload) {
-      console.log('engineID', payload)
-      this.engineID = payload
     },
     async calculateEngineInfo (payload) {
       this.engineInfo = payload

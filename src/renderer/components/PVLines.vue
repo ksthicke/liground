@@ -86,6 +86,9 @@ import { mapGetters } from 'vuex'
 import VueContext from 'vue-context/src/js/index'
 
 export default {
+  props: {
+    engineID: Number
+  },
   components: {
     VueContext
   },
@@ -99,7 +102,6 @@ export default {
           ucimove: ''
         }
       ],
-      engineID: 1,
       pvcount: 0,
       originalMultiPV: 1,
       showOnlyOnePvLine: false, // Flag to show only one PvLine
@@ -164,9 +166,6 @@ export default {
     fillpvCount (payload) {
       this.pvcount = payload
       this.originalMultiPV = payload
-    },
-    currentEngineIndex (payload) {
-      this.engineID = payload
     },
     fillPV (payload) {
       this.multipvMulti = payload
