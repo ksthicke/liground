@@ -123,7 +123,7 @@ export default {
       }
       return null
     },
-    ...mapGetters(['moves', 'fen', 'multipv', 'engineSettings', 'mainFirstMove', 'PvE', 'active', 'turn', 'enginetime', 'PvEValue', 'PvEParam', 'PvEInput', 'nodes', 'depth', 'seldepth', 'engineAuthor', 'engineName'])
+    ...mapGetters(['moves', 'fen', 'multipv', 'engineSettings', 'mainFirstMove', 'enginetime', 'PvEValue', 'PvEParam', 'PvEInput', 'nodes', 'depth', 'seldepth', 'engineAuthor', 'engineName'])
   },
   watch: {
     pvcount () {
@@ -142,24 +142,6 @@ export default {
     engineSettings () {
       this.originalMultiPV = this.engineSettings.MultiPV
       this.updateLines()
-    },
-    nodes () {
-      if (this.active && this.PvE && !this.turn) {
-        if (this.PvEValue === 'nodes') {
-          if (this.nodes >= (this.PvEInput)) {
-            this.onClick(this.lines[0])
-          }
-        }
-      }
-    },
-    depth () {
-      if (this.active && this.PvE && !this.turn) {
-        if (this.PvEValue === 'depth') {
-          if (this.depth >= (this.PvEInput)) {
-            this.onClick(this.lines[0])
-          }
-        }
-      }
     }
   },
   methods: {

@@ -352,6 +352,10 @@ export const store = new Vuex.Store({
     active (state, payload) {
       state.active = payload
     },
+    active_new (state, payload) {
+      const { active, engineID } = payload
+      state.analysisEngines[engineID-1].active = active
+    },
     destinations (state, payload) {
       state.destinations = payload
     },
@@ -876,6 +880,9 @@ export const store = new Vuex.Store({
     },
     active (context, payload) {
       context.commit('active', payload)
+    },
+    active_new (context, payload) {
+      context.commit('active_new', payload)
     },
     PvE (context, payload) {
       context.commit('PvE', payload)

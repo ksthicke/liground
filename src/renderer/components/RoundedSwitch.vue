@@ -3,7 +3,7 @@
   <label class="switch">
     <input
       type="checkbox"
-      :checked="engineActive"
+      v-model="engineActive"
     >
     <span class="slider round" />
   </label>
@@ -17,21 +17,14 @@ export default {
   props: {
     engineID: Number
   },
-  data () {
-    return {
-      engineActive: false
-    }
-  },
   computed: {
-    ...mapGetters(['active_new', 'PvE', 'turn']),
-    isActive () {
-      return this.active_new(this.engineID)
-    }
-  },
-  watch: { // KYLE: MOVE THIS TO STORE
-    isActive () {
-      if (this.engineID == 1 && this.isActive && !this.turn && this.PvE) {
-        this.$store.dispatch('goEnginePvE')
+    ...mapGetters(['active_new']),
+    engineActive: {
+      get () {
+        return this.active_new(this.engineID)
+      },
+      set (value) {
+        this.$store.dispatch('active_new', {active: value, engineID: this.engineID })
       }
     }
   }
