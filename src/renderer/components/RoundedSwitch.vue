@@ -14,24 +14,30 @@ import { mapGetters } from 'vuex'
 
 export default {
   name: 'RoundedSwitch',
+  props: {
+    engineID: Number
+  },
   data () {
     return {
       engineActive: false
     }
   },
   computed: {
-    ...mapGetters(['active', 'PvE', 'turn'])
+    ...mapGetters(['active_new', 'PvE', 'turn']),
+    isActive () {
+      return this.active_new(this.engineID)
+    }
   },
-  watch: {
-    active () {
-      if (this.active && !this.turn && this.PvE) {
+  watch: { // KYLE: MOVE THIS TO STORE
+    isActive () {
+      if (this.engineID == 1 && this.isActive && !this.turn && this.PvE) {
         this.$store.dispatch('goEnginePvE')
       }
     }
   },
   methods: {
     changeActiveState (payload) {
-      this.engineActive = payload
+      //this.engineActive = payload
     }
   }
 }

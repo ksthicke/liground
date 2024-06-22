@@ -13,12 +13,14 @@
       <EngineSelect
         ref="engineselect"
         class="select"
+        :engineID="this.engineID"
         @sendSelected="changeConsole($event)"
       />
       <div @input="onSwitch">
         <RoundedSwitch
           ref="roundedswitch"
           class="switch"
+          :engineID="this.engineID"
         />
       </div>
     </div>
@@ -35,12 +37,14 @@
       <EngineSelect
         ref="engineselect"
         class="select"
+        :engineID="this.engineID"
         @sendSelected="changeConsole($event)"
       />
       <div @input="onSwitch">
         <RoundedSwitch
           ref="roundedswitch"
           class="switch"
+          :engineID="this.engineID"
         />
       </div>
     </div>
@@ -49,6 +53,7 @@
       <EngineStats
         :class="(QuickTourIndex == 11) ? 'EngineStats-qt' : ''"
         ref="enginestats"
+        :engineID="this.engineID"
       />
       <div
         class="processing-bar"
@@ -57,6 +62,7 @@
       <PVLines
         ref="pvlines"
         :class="(QuickTourIndex == 12) ? 'panel-qt' : 'panel'"
+        :engineID="this.engineID"
       />
       <div
         :class="(QuickTourIndex == 13) ? 'game-window-qt' : 'game-window panel noselect'"
@@ -65,11 +71,13 @@
           <MoveHistoryNode
             v-if="movesExist"
             :move="mainFirstMove"
+            :engineID="this.engineID"
           />
         </div>
       </div>
       <JumpButtons
         :class="(QuickTourIndex == 14) ? 'JumpButtons-qt' : ''"
+        :engineID="this.engineID"
         @flip-board="$emit('flip-board', 0)"
         @move-to-start="$emit('move-to-start', 0)"
         @move-back-one="$emit('move-back-one', 0)"
@@ -79,6 +87,7 @@
       <EngineConsole
         ref="console"
         :class="(QuickTourIndex == 16) ? 'EngineConsole-qt' : ''"
+        :engineID="this.engineID"
         @reInitEngineOptions="changeState"
         @calculateEngineStats="fillEngineStats($event)"
         @calculateMultiPV="fillMultiPV($event)"
@@ -103,6 +112,9 @@ import ffish from 'ffish'
 
 export default {
   name: 'AnalysisContainer',
+  props: {
+    engineID: Number
+  },
   components: {
     // AnalysisEvalRow,
     JumpButtons,
@@ -118,7 +130,6 @@ export default {
       currentVariant: null,
       canceltwice: true,
       isEngineActive: false,
-      engineID: 1,
       engineStats: {
         depth: 0,
         seldepth: 0,
@@ -186,9 +197,6 @@ export default {
     }
   },
   watch: {
-    isEngineActive () {
-      this.$refs.roundedswitch.changeActiveState(this.isEngineActive)
-    },
     active () {
       if (this.engineID === 1) {
         if (this.isEngineActive && !this.active) {
@@ -201,9 +209,8 @@ export default {
     }
   },
   mounted () {
-    console.warn('MOUNTED')
+    console.warn('MOUNTED', this.engineID)
     this.currentVariant = this.variant
-    this.engineID = this.numberOfEngines
     this.$refs.pvlines.currentEngineIndex(this.engineID)
     this.$refs.console.setEngineIndex(this.engineID)
     this.$refs.enginestats.fillID(this.engineID)

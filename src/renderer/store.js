@@ -1325,6 +1325,9 @@ export const store = new Vuex.Store({
     active (state) {
       return state.active
     },
+    active_new (state) {
+      return (engineID) => state.analysisEngines[engineID-1].active
+    },
     PvE (state) {
       return state.PvE
     },

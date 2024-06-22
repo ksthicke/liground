@@ -8,6 +8,7 @@
       v-for="engine in Engines"
       ref="analysiscontainer"
       :key="engine.number"
+      :engineID="engine.number"
       @flip-board="$emit('flip-board', 0)"
       @move-to-start="$emit('move-to-start', 0)"
       @move-back-one="$emit('move-back-one', 0)"
@@ -75,8 +76,8 @@ export default {
     },
     addEngine () {
       this.counter++
-      this.Engines.push({ Engine: this.counter })
-      console.log(this.Engines)
+      this.Engines.push({ number: this.counter })
+      console.log('AnaylsisView Engines',this.Engines)
       this.$store.dispatch('addAnalysisEngine')
       this.$store.dispatch('numberOfEngines', this.counter)
     }
