@@ -34,11 +34,6 @@ export default {
         this.$store.dispatch('goEnginePvE')
       }
     }
-  },
-  methods: {
-    changeActiveState (payload) {
-      //this.engineActive = payload
-    }
   }
 }
 </script>
