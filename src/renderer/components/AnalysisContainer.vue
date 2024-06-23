@@ -16,7 +16,7 @@
         :engineID="this.engineID"
         @sendSelected="changeConsole($event)"
       />
-      <div @input="onSwitch">
+      <div>
         <RoundedSwitch
           ref="roundedswitch"
           class="switch"
@@ -40,7 +40,7 @@
         :engineID="this.engineID"
         @sendSelected="changeConsole($event)"
       />
-      <div @input="onSwitch">
+      <div>
         <RoundedSwitch
           ref="roundedswitch"
           class="switch"
@@ -129,7 +129,6 @@ export default {
     return {
       currentVariant: null,
       canceltwice: true,
-      isEngineActive: false,
       engineStats: {
         depth: 0,
         seldepth: 0,
@@ -150,7 +149,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['active', 'mainFirstMove', 'cpForWhiteStr', 'numberOfEngines', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
+    ...mapGetters(['active_new', 'mainFirstMove', 'cpForWhiteStr', 'numberOfEngines', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
+    isEngineActive () {
+      return this.active_new(this.engineID)
+    },
     movesExist () {
       const moves = this.$store.getters.moves
       return moves.length !== 0
@@ -197,13 +199,6 @@ export default {
     }
   },
   watch: {
-    active () {
-      if (this.engineID === 1) {
-        if (this.isEngineActive && !this.active) {
-          this.changeState()
-        }
-      }
-    },
     reset () {
       this.$store.commit('resetMultiPV')
     }
@@ -239,16 +234,11 @@ export default {
           this.$refs.console.stopEngine()
           this.currentVariant = this.variant
         }
-        this.isEngineActive = false
         await this.$refs.console.changeBinary(event)
       }
     },
     changeState () {
-      this.isEngineActive = !this.isEngineActive
-    },
-    onSwitch () {
-      this.$refs.console.activateEngine(this.isEngineActive)
-      this.changeState()
+      //this.isEngineActive = !this.isEngineActive
     },
     /**
     * Calculate the value for current side to move.

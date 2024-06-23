@@ -190,8 +190,7 @@ export default {
       'engineOptions',
       'engineSettings',
       'selectedEngine',
-      'numberOfEngines',
-      'active'
+      'numberOfEngines'
     ])
   },
   watch: {

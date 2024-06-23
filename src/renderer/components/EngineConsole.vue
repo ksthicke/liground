@@ -85,7 +85,6 @@ export default {
       autoScroll: true,
       scrollbarSize: 0,
       newEngine: null,
-      engineActive: false,
       engineStats: {
         depth: 0,
         seldepth: 0,
@@ -120,9 +119,12 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['active', 'PvE', 'availableEngines', 'fen', 'turn', 'multipv', 'variant', 'is960']),
+    ...mapGetters(['active_new', 'PvE', 'availableEngines', 'fen', 'turn', 'multipv', 'variant', 'is960']),
     fullHeight () {
       return this.io.length
+    },
+    engineActive () {
+      return this.active_new(this.engineID)
     }
   },
   watch: {
@@ -144,17 +146,13 @@ export default {
         this.$emit('calculateEngineStats', this.engineStats)
       }
     },
-    active () {
-      if (this.engineID === 1) {
-        if (this.engineActive && !this.active) {
-          this.engineActive = !this.engineActive
-        }
-      }
-    },
     fen () {
       if (this.engineID !== 1) {
         this.restartEngine()
       }
+    },
+    engineActive () {
+      this.activateEngine()
     }
   },
   beforeDestroy () {
@@ -170,7 +168,7 @@ export default {
     async resetEngine (payload) {
       if (payload) {
         await this.newEngine.send('stop')
-        this.engineActive = false
+        this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
       }
       this.resetEngineData()
       this.resetEngineTime()
@@ -288,7 +286,7 @@ export default {
       console.warn('EngineConsole.vue: changeBinary', event)
       if (this.engineID !== 1) {
         if (this.newEngine != null) {
-          this.engineActive = false
+          this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
           this.newEngine.send('quit')
           this.resetEngineData()
         }
@@ -380,7 +378,7 @@ export default {
         }
         this.resetEngineData()
         this.resetEngineTime()
-        this.engineActive = false
+        this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
       }
       // context.dispatch('resetEngineData')
       for (const [name, value] of Object.entries(payload)) {
@@ -495,13 +493,13 @@ export default {
         this.input = ''
       }
     },
-    activateEngine (payload) {
+    activateEngine () {
       if (this.currentlySwitchingVariant === true) {
         this.currentlySwitchingVariant = false
         return
       }
-      const switchOn = payload
-      if (!switchOn) {
+      const switchOn = this.engineActive
+      if (switchOn) {
         if (this.enginetime === 0 && this.engineID !== 1) {
           this.startClock()
         }
@@ -523,7 +521,6 @@ export default {
           this.$store.dispatch('stopEngine')
         }
       }
-      this.engineActive = !this.engineActive
     },
     resetEngineData () {
       this.resetEngineStats()
@@ -562,8 +559,7 @@ export default {
           this.newEngine.send('stop')
         }
         this.resetEngineTime()
-        this.engineActive = false
-        this.activateEngine(false)
+        this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
       }
     }
   }
