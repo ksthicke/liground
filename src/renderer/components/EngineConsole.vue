@@ -132,9 +132,6 @@ export default {
       if (this.engineID !== 1) {
         if (this.engineName === this.$store.getters.selectedEngine.name) {
           if (this.localStorageSettings !== localStorage.getItem('engine' + this.engineName)) {
-            if (this.engineActive) {
-              this.$emit('reInitEngineOptions')
-            }
             await this.initEngineOptions()
           }
         }

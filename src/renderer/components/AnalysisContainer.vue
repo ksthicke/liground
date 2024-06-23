@@ -88,7 +88,6 @@
         ref="console"
         :class="(QuickTourIndex == 16) ? 'EngineConsole-qt' : ''"
         :engineID="this.engineID"
-        @reInitEngineOptions="changeState"
         @calculateEngineStats="fillEngineStats($event)"
         @calculateMultiPV="fillMultiPV($event)"
         @sendMultiPvCount="fillMultiPVCount($event)"
@@ -116,7 +115,6 @@ export default {
     engineID: Number
   },
   components: {
-    // AnalysisEvalRow,
     JumpButtons,
     EngineStats,
     PVLines,
