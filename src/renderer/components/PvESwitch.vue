@@ -34,11 +34,14 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['PvE', 'active', 'turn', 'multipv', 'depth'])
+    ...mapGetters(['PvE', 'active_new', 'turn', 'multipv', 'depth']),
+    isActive () {
+      return this.active_new(1)
+    }
   },
   watch: {
     depth () {
-      if (this.active && this.PvE && this.turn && this.depth > 0) {
+      if (this.isActive && this.PvE && this.turn && this.depth > 0) {
         this.$store.dispatch('resetEngineData')
         this.$store.commit('resetEngineTime')
       }
@@ -50,15 +53,15 @@ export default {
       }
     },
     PvE () {
-      if (!this.active && !this.PvE && this.turn) {
+      if (!this.isActive && !this.PvE && this.turn) {
         this.$store.dispatch('position')
       }
-      if (this.active && this.PvE && this.turn) {
+      if (this.isActive && this.PvE && this.turn) {
         this.$store.dispatch('resetEngineData')
         this.$store.commit('resetEngineTime')
         this.$store.dispatch('stopEnginePvE')
       }
-      if (this.active && this.PvE && !this.turn) {
+      if (this.isActive && this.PvE && !this.turn) {
         // may lead to an inconsistent engine
         engine.send('stop')
         this.$store.dispatch('goEnginePvE')

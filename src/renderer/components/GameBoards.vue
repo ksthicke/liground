@@ -379,7 +379,7 @@ export default {
       console.log(`fen: ${this.$store.getters.fen}`)
       console.log(`event.history: ${event.history}`)
 
-      if (this.$store.getters.active) {
+      if (this.$store.getters.active_new(1)) {
         this.$store.dispatch('stopEngine')
         this.$store.dispatch('position')
         this.$store.dispatch('goEngine')

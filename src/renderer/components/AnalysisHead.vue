@@ -70,9 +70,6 @@ export default {
       const varop = Object.keys(this.$store.getters.variantOptions.getAll()) // returns all keys in variantOptions, those are then listed in the dropdown menu
       return varop
     },
-    active () {
-      return this.$store.getters.active
-    },
     ...mapState(['variant']),
     variantOptions () {
       return this.$store.getters.variantOptions
