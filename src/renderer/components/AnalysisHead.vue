@@ -46,19 +46,17 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['QuickTourIndex', 'variantOptions','variant']),
     options () { // returns all keys in variantOptions, those are then listed in the dropdown menu
       const varop = Object.keys(this.$store.getters.variantOptions.getAll())
       return varop
     },
-    ...mapState(['variant']),
-    ...mapGetters(['QuickTourIndex', 'variantOptions']),
     displayVariant () { // retuns the "nice" name of the current variant
       return this.variantOptions.revGet(this.variant)
     }
   },
   methods: {
     updateVariant (payload) {
-      this.$emit('updateVariant')
       this.$store.dispatch('variant', this.variantOptions.get(payload))
     },
     resetBoard () {

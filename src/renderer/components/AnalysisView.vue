@@ -2,13 +2,12 @@
   <div class="analysis">
     <AnalysisHead
       @resetMultiEngine="resetEngines"
-      @updateVariant="removeAllEngines"
     />
     <AnalysisContainer
-      v-for="engine in Engines"
+      v-for="(engine, index) in this.analysisEngines"
       ref="analysiscontainer"
-      :key="engine.number"
-      :engineID="engine.number"
+      :key="index+1"
+      :engineID="index+1"
       @flip-board="$emit('flip-board', 0)"
       @move-to-start="$emit('move-to-start', 0)"
       @move-back-one="$emit('move-back-one', 0)"
@@ -33,6 +32,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import AnalysisHead from './AnalysisHead'
 import AnalysisContainer from './AnalysisContainer.vue'
 
@@ -42,23 +42,16 @@ export default {
     AnalysisHead,
     AnalysisContainer
   },
-  data () {
-    return {
-      Engines: [],
-      counter: 0
-    }
-  },
   beforeMount () {
     this.addEngine()
   },
+  computed: {
+    ...mapState(['analysisEngines']),
+    numberOfEngines () {
+      return this.analysisEngines.length
+    }
+  },
   methods: {
-    removeAllEngines () {
-      let i = this.counter
-      for (i; i > 1; i--) {
-        this.Engines.pop()
-      }
-      this.counter = 1
-    },
     resetEngines () {
       let i = 1
       for (i; i < this.counter; i++) {
@@ -66,16 +59,11 @@ export default {
       }
     },
     removeEngine () {
-      if (this.counter > 1) {
-        this.counter--
-        this.Engines.pop()
+      if (this.numberOfEngines > 1) {
         this.$store.dispatch('removeAnalysisEngine')
       }
     },
     addEngine () {
-      this.counter++
-      this.Engines.push({ number: this.counter })
-      console.log('AnaylsisView Engines',this.Engines)
       this.$store.dispatch('addAnalysisEngine')
     }
   }

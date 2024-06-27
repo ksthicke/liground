@@ -909,6 +909,7 @@ export const store = new Vuex.Store({
     },
     variant (context, payload) {
       if (context.getters.variant !== payload) {
+        context.dispatch('removeAllEngines')
         // prepare engine
         if (context.getters.active) {
           context.dispatch('stopEngine')
@@ -1118,8 +1119,13 @@ export const store = new Vuex.Store({
     addAnalysisEngine (context) {
       context.commit('addAnalysisEngine')
     },
-    removeAnalysisEngine (context, payload) {
+    removeAnalysisEngine (context) {
       context.commit('removeAnalysisEngine')
+    },
+    removeAllEngines (context) {
+      while (context.state.analysisEngines.length > 1) {
+        context.commit('removeAnalysisEngine')
+      }
     },
     async changeAnalysisEngine (context, payload) {
       const { name, engineID } = payload
