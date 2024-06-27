@@ -2,17 +2,7 @@
   <div class="ceval grid-parent">
     LiGround
     <Multiselect
-      v-if="QuickTourIndex !== 7"
-      class="multiselect"
-      :value="displayVariant"
-      :options="options"
-      :allow-empty="false"
-      :show-labels="false"
-      @input="updateVariant"
-    />
-    <Multiselect
-      v-else
-      class="multiselect-qt"
+      :class="(QuickTourIndex == 7) ? 'multiselect-qt' : 'multiselect'"
       :value="displayVariant"
       :options="options"
       :allow-empty="false"
@@ -27,21 +17,11 @@
         @click="resetBoard"
       >
     </div>
-    <Mode960 v-if="QuickTourIndex !== 8" />
     <Mode960
-      v-else
-      id="Mode960-qt"
+      :class="(QuickTourIndex == 8) ? 'Mode960-qt' : ''"
     />
     <div
-      v-if="QuickTourIndex !== 9"
-      id="PvESwitch"
-    >
-      PvE
-      <PvESwitch />
-    </div>
-    <div
-      v-else
-      id="PvESwitch-qt"
+      :class="(QuickTourIndex == 9) ? 'PvESwitch-qt' : 'PvESwitch'"
     >
       PvE
       <PvESwitch />
@@ -118,18 +98,18 @@ export default {
   font-size: 15pt;
   height: 40px;
 }
-#Mode960-qt{
+.Mode960-qt{
   border: 5px solid var(--quicktour-highlight);
 }
 .multiselect-qt{
   border: 5px solid var(--quicktour-highlight);
 }
-#PvESwitch-qt{
+.PvESwitch-qt{
   margin-left: 8px;
   display: flex;
   border: 5px solid var(--quicktour-highlight);
 }
-#PvESwitch{
+.PvESwitch{
   margin-top: 8px;
   display: flex;
 }
