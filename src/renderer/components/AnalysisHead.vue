@@ -46,18 +46,15 @@ export default {
     }
   },
   computed: {
-    options () {
-      const varop = Object.keys(this.$store.getters.variantOptions.getAll()) // returns all keys in variantOptions, those are then listed in the dropdown menu
+    options () { // returns all keys in variantOptions, those are then listed in the dropdown menu
+      const varop = Object.keys(this.$store.getters.variantOptions.getAll())
       return varop
     },
     ...mapState(['variant']),
-    variantOptions () {
-      return this.$store.getters.variantOptions
-    },
+    ...mapGetters(['QuickTourIndex', 'variantOptions']),
     displayVariant () { // retuns the "nice" name of the current variant
       return this.variantOptions.revGet(this.variant)
-    },
-    ...mapGetters(['QuickTourIndex'])
+    }
   },
   methods: {
     updateVariant (payload) {

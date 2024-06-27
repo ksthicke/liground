@@ -20,13 +20,13 @@
         class="buttonRed"
         @click="removeEngine"
       >
-        <b>Remove Engine </b>
+        <b>Remove Engine</b>
       </button>
       <button
         class="buttonBlue"
         @click="addEngine"
       >
-        <b>Add Engine </b>
+        <b>Add Engine</b>
       </button>
     </div>
   </div>
@@ -58,7 +58,6 @@ export default {
         this.Engines.pop()
       }
       this.counter = 1
-      this.$store.dispatch('numberOfEngines', this.counter)
     },
     resetEngines () {
       let i = 1
@@ -71,7 +70,6 @@ export default {
         this.counter--
         this.Engines.pop()
         this.$store.dispatch('removeAnalysisEngine')
-        this.$store.dispatch('numberOfEngines', this.counter)
       }
     },
     addEngine () {
@@ -79,7 +77,6 @@ export default {
       this.Engines.push({ number: this.counter })
       console.log('AnaylsisView Engines',this.Engines)
       this.$store.dispatch('addAnalysisEngine')
-      this.$store.dispatch('numberOfEngines', this.counter)
     }
   }
 }

@@ -147,7 +147,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['active_new', 'mainFirstMove', 'cpForWhiteStr', 'numberOfEngines', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
+    ...mapGetters(['active_new', 'mainFirstMove', 'cpForWhiteStr', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
     isEngineActive () {
       return this.active_new(this.engineID)
     },

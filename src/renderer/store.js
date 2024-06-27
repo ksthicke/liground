@@ -186,7 +186,6 @@ export const store = new Vuex.Store({
     active: false,
 
     // Not engine specific:
-    numberOfEngines: 1, // number of engine analyses on the screen
     initialized: false, // whether or not the board has been initialized
     PvE: false,
     PvEParam: 'go movetime 1000',
@@ -273,9 +272,6 @@ export const store = new Vuex.Store({
     },
     fen (state, payload) {
       state.fen = payload
-    },
-    numberOfEngines (state, payload) {
-      state.numberOfEngines = payload
     },
     startFen (state, payload) {
       state.startFen = payload
@@ -462,10 +458,10 @@ export const store = new Vuex.Store({
       state.analysisEngines.push(newEngine)
       console.log(state.analysisEngines[0])
     },
-    removeAnalysisEngine (context, payload) {
+    removeAnalysisEngine (state) {
       state.analysisEngines.pop()
     },
-    changeAnalysisEngine (context, payload) {
+    changeAnalysisEngine (state, payload) {
 
     },
     hoveredpv (state, payload) {
@@ -797,9 +793,6 @@ export const store = new Vuex.Store({
     setActiveTrue (context) {
       context.commit('active', true)
     },
-    setActiveFalse (context) {
-      context.commit('active', false)
-    },
     PvEtrue (context) {
       context.commit('PvE', true)
     },
@@ -886,9 +879,6 @@ export const store = new Vuex.Store({
     },
     PvE (context, payload) {
       context.commit('PvE', payload)
-    },
-    numberOfEngines (context, payload) {
-      context.commit('numberOfEngines', payload)
     },
     PvEParam (context, payload) {
       context.commit('PvEParam', payload)
@@ -1304,9 +1294,6 @@ export const store = new Vuex.Store({
     }
   },
   getters: {
-    numberOfEngines (state) {
-      return state.numberOfEngines
-    },
     currentMove (state) {
       return state.moves.filter(moves => moves.fen === state.fen)
     },
