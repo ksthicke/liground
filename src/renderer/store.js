@@ -786,12 +786,9 @@ export const store = new Vuex.Store({
     },
     PvEMakeMove (context, payload) {
       const state = context.state
-      if (state.active && state.PvE && !state.turn) {
+      if (context.getters.active_new(1) && state.PvE && !state.turn) {
         context.dispatch('push', { move: payload, prev: context.getters.currentMove[0] })
       }
-    },
-    setActiveTrue (context) {
-      context.commit('active', true)
     },
     PvEtrue (context) {
       context.commit('PvE', true)
@@ -805,7 +802,7 @@ export const store = new Vuex.Store({
         context.dispatch('stopEngine')
       } else {
         context.commit('resetEngineTime')
-        context.commit('active', false)
+        context.commit('active_new', { active: false, engineID: 1 })
       }
       context.dispatch('resetEngineData')
     },
@@ -909,9 +906,11 @@ export const store = new Vuex.Store({
     },
     variant (context, payload) {
       if (context.getters.variant !== payload) {
+        // remove all engine, except the first one
         context.dispatch('removeAllEngines')
+
         // prepare engine
-        if (context.getters.active) {
+        if (context.getters.active_new(1)) {
           context.dispatch('stopEngine')
         }
         context.dispatch('resetEngineData')

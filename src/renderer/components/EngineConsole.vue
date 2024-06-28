@@ -501,7 +501,7 @@ export default {
           this.startClock()
         }
         if (this.PvE && this.engineID === 1) {
-          this.$store.dispatch('setActiveTrue')
+          this.$store.dispatch('active_new', { active: true, engineID: 1 })
         } else {
           if (this.engineID < 2) {
             this.$store.dispatch('position')
