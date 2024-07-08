@@ -18,7 +18,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { engine } from '../engine'
 import OpeningSuitModal from './OpeningSuitModal'
 
 export default {
@@ -34,7 +33,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['PvE', 'active_new', 'turn', 'multipv', 'depth']),
+    ...mapGetters(['PvE', 'active_new', 'turn', 'depth']),
+    engine () {
+      return this.$store.getters.computeEngine(1)
+    },
     isActive () {
       return this.active_new(1)
     }
@@ -42,28 +44,30 @@ export default {
   watch: {
     depth () {
       if (this.isActive && this.PvE && this.turn && this.depth > 0) {
-        this.$store.dispatch('resetEngineData')
-        this.$store.commit('resetEngineTime')
+        this.$store.dispatch('resetEngineData', 1)
+        this.$store.commit('resetEngineTime', 1)
       }
     },
     turn () {
       if (this.turn && this.PvE) {
-        this.$store.dispatch('resetEngineData')
-        this.$store.commit('resetEngineTime')
+        this.$store.dispatch('resetEngineData', 1)
+        this.$store.commit('resetEngineTime', 1)
       }
     },
     PvE () {
+      // PvE just turned off
       if (!this.isActive && !this.PvE && this.turn) {
-        this.$store.dispatch('position')
+        this.$store.dispatch('position', 1)
       }
-      if (this.isActive && this.PvE && this.turn) {
-        this.$store.dispatch('resetEngineData')
-        this.$store.commit('resetEngineTime')
+      // PvE just turned on
+      else if (this.isActive && this.PvE && this.turn) {
+        this.$store.dispatch('resetEngineData', 1)
+        this.$store.commit('resetEngineTime', 1)
         this.$store.dispatch('stopEnginePvE')
       }
-      if (this.isActive && this.PvE && !this.turn) {
+      else if (this.isActive && this.PvE && !this.turn) {
         // may lead to an inconsistent engine
-        engine.send('stop')
+        this.engine.send('stop')
         this.$store.dispatch('goEnginePvE')
       }
     }

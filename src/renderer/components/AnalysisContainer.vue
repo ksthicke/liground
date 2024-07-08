@@ -1,38 +1,13 @@
 <template>
   <div>
     <div
-      v-if="QuickTourIndex !== 10"
-      class="containerEvalBar"
+      :class="(QuickTourIndex == 10) ? 'containerEvalBar-qt' : 'containerEvalBar'"
     >
       <div
         class="eval"
         :class="{ smaller: cpForWhiteStr.includes('/') }"
       >
-        {{ engineID === 1? cpForWhiteStr: cpStr }}
-      </div>
-      <EngineSelect
-        ref="engineselect"
-        class="select"
-        :engineID="this.engineID"
-        @sendSelected="changeConsole($event)"
-      />
-      <div>
-        <RoundedSwitch
-          ref="roundedswitch"
-          class="switch"
-          :engineID="this.engineID"
-        />
-      </div>
-    </div>
-    <div
-      v-else
-      class="containerEvalBar-qt"
-    >
-      <div
-        class="eval"
-        :class="{ smaller: cpForWhiteStr.includes('/') }"
-      >
-        {{ engineID === 1? cpForWhiteStr: cpStr }}
+        {{ cpForWhiteStr }}
       </div>
       <EngineSelect
         ref="engineselect"
@@ -49,7 +24,6 @@
       </div>
     </div>
     <div class="analysis">
-      <!-- <AnalysisEvalRow /> -->
       <EngineStats
         :class="(QuickTourIndex == 11) ? 'EngineStats-qt' : ''"
         ref="enginestats"
@@ -88,9 +62,6 @@
         ref="console"
         :class="(QuickTourIndex == 16) ? 'EngineConsole-qt' : ''"
         :engineID="this.engineID"
-        @calculateEngineStats="fillEngineStats($event)"
-        @calculateMultiPV="fillMultiPV($event)"
-        @sendMultiPvCount="fillMultiPVCount($event)"
       />
     </div>
   </div>
@@ -99,7 +70,6 @@
 <script>
 import { mapGetters } from 'vuex'
 
-// import AnalysisEvalRow from './AnalysisEvalRow'
 import JumpButtons from './JumpButtons'
 import EngineStats from './EngineStats'
 import PVLines from './PVLines'
@@ -147,7 +117,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['active_new', 'mainFirstMove', 'cpForWhiteStr', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
+    ...mapGetters(['active_new', 'mainFirstMove', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
     isEngineActive () {
       return this.active_new(this.engineID)
     },
@@ -157,6 +127,9 @@ export default {
     },
     fullHeight () {
       return this.io.length
+    },
+    cpForWhiteStr () {
+      return this.$store.getters.cpForWhiteStr(this.engineID)
     },
     cpStr () {
       const currentMove = this.currentMove[0]
@@ -198,7 +171,7 @@ export default {
   },
   watch: {
     reset () {
-      this.$store.commit('resetMultiPV')
+      this.$store.commit('resetMultiPV', 1)
     }
   },
   mounted () {
@@ -211,20 +184,9 @@ export default {
         this.changeState()
       }
     },
-    fillMultiPVCount (event) {
-      this.multipvCount = event
-      this.$refs.pvlines.fillpvCount(this.multipvCount)
-    },
-    fillMultiPV (event) {
-      this.multipv = event
-      this.$refs.pvlines.fillPV(this.multipv)
-    },
-    fillEngineStats (event) {
-      this.engineStats = event
-      this.$refs.enginestats.fillStats(this.engineStats)
-    },
     async changeConsole (event) {
       if (this.engineID === 1 && this.canceltwice) {
+        console.log('error here?', JSON.stringify(this.$refs,null,4))
         this.$refs.console.changeBinary(event)
         this.canceltwice = false
       } else if (this.engineID !== 1) {

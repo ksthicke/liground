@@ -32,40 +32,48 @@ export default {
     engineID: Number
   },
   components: { Multiselect },
-  data () {
-    return {
-      selected: null,
-    }
-  },
   computed: {
+    selected: {
+      get () {
+        return this.$store.getters.selectedEngine(this.engineID)
+      },
+      set (value) {
+        this.$store.dispatch('changeEngine', { engineName: value.name, engineID: this.engineID })
+        this.sendSelected()
+      }
+    },
     engineLogo () {
       return `url(${this.selectedEngine.logo || defaultLogo})`
     },
-    ...mapGetters(['availableEngines', 'selectedEngine'])
+    ...mapGetters(['availableEngines']),
+    selectedEngine () {
+      console.log('computed updated')
+      return this.$store.getters.selectedEngine(this.engineID)
+    }
   },
   watch: {
-    selected () {
-      console.log('EngineSelect', this.engineID, this.selected, this.$store.state.allEngines)
+    /*selected () {
+      console.log('EngineSelect', this.engineID, JSON.stringify(this.selected,null,4))//, JSON.stringify(this.$store.state.analysisEngines, null, 4))
       if (this.engineID < 2) {
-        this.$store.dispatch('changeEngine', this.selected.name)
+        this.$store.dispatch('changeEngine', { engineName: this.selected.name, engineID: this.engineID })
       }
       this.sendSelected()
     },
     selectedEngine () {
-      if (this.engineID < 2) {
-        this.selected = this.selectedEngine
-      }
-    }
+      console.log('selectedEngine changed', JSON.stringify(this.selected,null,4), JSON.stringify(this.selectedEngine,null,4))
+      this.selected = this.selectedEngine
+    }*/
   },
   created () {
+    console.log('created', this.engineID, this.selectedEngine)
     this.selected = this.selectedEngine
   },
   methods: {
     sendSelected () {
-      this.$emit('sendSelected', this.selected.name)
+      //this.$emit('sendSelected', this.selected.name)
       // new
       if (this.selected.name !== null) {
-        this.$store.dispatch('changeAnalysisEngine', {name: this.selected.name, engineID: this.engineID})
+        this.$store.dispatch('changeAnalysisEngine', { name: this.selected.name, engineID: this.engineID })
       }
     }
   }

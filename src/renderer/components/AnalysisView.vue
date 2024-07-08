@@ -42,9 +42,6 @@ export default {
     AnalysisHead,
     AnalysisContainer
   },
-  beforeMount () {
-    this.addEngine()
-  },
   computed: {
     ...mapState(['analysisEngines']),
     numberOfEngines () {

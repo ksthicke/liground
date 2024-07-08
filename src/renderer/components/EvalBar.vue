@@ -16,7 +16,10 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'EvalBar',
   computed: {
-    ...mapGetters(['orientation', 'cpForWhitePerc'])
+    ...mapGetters(['orientation']),
+    cpForWhitePerc () {
+      return this.$store.getters.cpForWhitePerc(1) // NEEDS TO BE CHANGED TO USE ENGINEID
+    }
   }
 }
 </script>

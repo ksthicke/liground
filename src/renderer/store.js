@@ -117,6 +117,39 @@ function checkOption (options, name, value) {
   }
 }
 
+function emptyAnalysisEngine () {
+  const newEngine = {
+    engine: new Engine(),
+    engineInfo: {
+      name: '',
+      author: '',
+      options: []
+    },
+    engineSettings: {},
+    engineStats: {
+      depth: 0,
+      seldepth: 0,
+      nodes: 0,
+      nps: 0,
+      hashfull: 0,
+      tbhits: 0,
+      time: 0
+    },
+    multipv: [
+      {
+        cp: 0,
+        pv: "",
+        ucimove: ""
+      }
+    ],
+    clock: null,
+    enginetime: 0,
+    active: false,
+    activeEngine: null
+  }
+  return newEngine
+}
+
 const filteredSettings = ['UCI_Variant', 'UCI_Chess960']
 
 export const store = new Vuex.Store({
@@ -154,10 +187,11 @@ export const store = new Vuex.Store({
      *  clock: null,          // holds ID for the timer to compute enginetime
      *  enginetime: <Number>, // used for displaying the time from clock since 
      *                        // engineStats.time is not always updated every second
-     *  active: <Boolean>     // whether or not the engine is currently turned on
+     *  active: <Boolean>,    // whether or not the engine is currently turned on
+     *  activeEngine          // name that code uses (e.g., in engines.js) to identify engine
      * }
      */
-    analysisEngines: [],
+    analysisEngines: [emptyAnalysisEngine()],
     // Engine specific:
     engineInfo: {
       name: '',
@@ -184,6 +218,7 @@ export const store = new Vuex.Store({
       }
     ],
     active: false,
+    activeEngine: null,
 
     // Not engine specific:
     initialized: false, // whether or not the board has been initialized
@@ -197,7 +232,7 @@ export const store = new Vuex.Store({
     resized9x10height: 0,
     resized9x10width: 0,
     dimNumber: 0,
-    turn: true,
+    turn: true, // whether or not it is the human player's turn
     fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     lastFen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', // to track the end of the current line
     startFen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
@@ -228,7 +263,6 @@ export const store = new Vuex.Store({
     orientation: 'white',
     message: 'hello from Vuex',
     allEngines: allEngines, // array of all engines installed
-    activeEngine: null,
     selectedEngines: {}, // engine user has most recently selected for each variant
     hoveredpv: -1,
     counter: 0,
@@ -352,6 +386,10 @@ export const store = new Vuex.Store({
       const { active, engineID } = payload
       state.analysisEngines[engineID-1].active = active
     },
+    activeEngine (state, payload) {
+      const {activeEngine, engineID } = payload
+      state.analysisEngines[engineID-1].activeEngine = activeEngine
+    },
     destinations (state, payload) {
       state.destinations = payload
     },
@@ -364,44 +402,29 @@ export const store = new Vuex.Store({
     selectedEngines (state, payload) {
       state.selectedEngines = payload
     },
-    clearIO () {
+    clearIO (payload) {
       // dummy to trigger update in console
     },
     engineInfo (state, payload) {
-      console.warn('engineInfo', payload)
-      state.engineInfo = payload
-      const settings = {}
-      for (const option of payload.options) {
-        if (!filteredSettings.includes(option.name)) {
-          switch (option.type) {
-            case 'check':
-              settings[option.name] = option.default === 'true'
-              break
-            case 'spin':
-            case 'combo':
-              settings[option.name] = option.default
-              break
-            case 'string':
-              settings[option.name] = option.default || ''
-              break
-          }
-        }
-      }
-      state.engineSettings = settings
+      const { engineInfo, engineID } = payload
+      state.analysisEngines[engineID-1].engineInfo = engineInfo
+    },
+    engineSettings (state, payload) {
+      const { engineID, settings } = payload
+      state.analysisEngines[engineID-1].engineSettings = settings
     },
     setEngineInfo (state, payload) {
       const { engineID, engineInfo } = payload
-      console.log(engineInfo)
       state.analysisEngines[engineID-1].engineInfo = engineInfo
-      console.log(JSON.stringify(state.analysisEngines, null, 4))
     },
     engineStats (state, payload) {
-      console.warn('enginestats', payload)
-      state.engineStats = payload
+      const { stats, engineID } = payload
+      state.analysisEngines[engineID-1].engineStats = stats
     },
-    resetEngineStats (state) {
-      state.enginetime = 0
-      state.engineStats = {
+    resetEngineStats (state, payload) {
+      const engineID = payload
+      state.analysisEngines[engineID-1].enginetime = 0
+      state.analysisEngines[engineID-1].engineStats = {
         depth: 0,
         seldepth: 0,
         nodes: 0,
@@ -412,7 +435,8 @@ export const store = new Vuex.Store({
       }
     },
     multipv (state, payload) {
-      for (const pvline of payload) {
+      const { lines, engineID } = payload
+      for (const pvline of lines) {
         if (pvline) {
           if (pvline.cp || pvline.mate) {
             pvline.cpDisplay = typeof pvline.mate === 'number' ? `#${calcForSide(pvline.mate, state.turn)}` : cpToString(calcForSide(pvline.cp, state.turn))
@@ -425,38 +449,15 @@ export const store = new Vuex.Store({
           }
         }
       }
-      state.multipv = payload
+      state.analysisEngines[engineID-1].multipv = lines
     },
     setEngineOption (state, payload) {
       const { engineID, name, value } = payload
       Vue.set(state.analysisEngines[engineID-1].engineSettings, name, value)
-      console.log('setEngineOption', state.analysisEngines[engineID-1].engineSettings)
     },
     addAnalysisEngine (state) {
-      const newEngine = {
-        engine: new Engine(),
-        engineInfo: {
-          name: '',
-          author: '',
-          options: []
-        },
-        engineSettings: {},
-        engineStats: {
-          depth: 0,
-          seldepth: 0,
-          nodes: 0,
-          nps: 0,
-          hashfull: 0,
-          tbhits: 0,
-          time: 0
-        },
-        multipv: [],
-        clock: null,
-        enginetime: 0,
-        active: false
-      }
+      const newEngine = emptyAnalysisEngine()
       state.analysisEngines.push(newEngine)
-      console.log(state.analysisEngines[0])
     },
     removeAnalysisEngine (state) {
       state.analysisEngines.pop()
@@ -470,8 +471,9 @@ export const store = new Vuex.Store({
     increment (state, payload) {
       state.counter += payload
     },
-    resetMultiPV (state) {
-      state.multipv = [
+    resetMultiPV (state, payload) {
+      const engineID = payload
+      state.analysisEngines[engineID-1].multipv = [
         {
           cp: 0,
           pv: '',
@@ -511,7 +513,7 @@ export const store = new Vuex.Store({
       state.startFen = state.board.fen()
       state.selectedGame = null
       state.fenply = 1
-      this.commit('resetEngineStats')
+      this.commit('resetEngineStats', 1)
     },
     resetBoard (state, payload) {
       if (!payload.is960) {
@@ -616,12 +618,13 @@ export const store = new Vuex.Store({
       state.moves = []
       state.moves = payload
     },
-    setEngineClock (state) {
-      console.log('setEngineClock')
-      state.clock = setInterval(function () { state.enginetime = state.enginetime + 1000 }, 1000)
+    setEngineClock (state, payload) {
+      const engineID = payload
+      state.analysisEngines[engineID-1].clock = setInterval(function () { state.analysisEngines[engineID-1].enginetime = state.analysisEngines[engineID-1].enginetime + 1000 }, 1000)
     },
-    resetEngineTime (state) {
-      clearInterval(state.clock)
+    resetEngineTime (state, payload) {
+      const engineID = payload
+      clearInterval(state.analysisEngines[engineID-1].clock)
     },
     saveSettings (state) {
       localStorage.darkMode = state.darkMode
@@ -647,10 +650,10 @@ export const store = new Vuex.Store({
       context.commit('curVar960Fen', payload)
     },
     resetBoard (context, payload) {
-      context.commit('resetMultiPV')
+      context.commit('resetMultiPV', 1)
       context.commit('resetBoard', payload)
-      context.dispatch('setEngineOptions', { UCI_Chess960: payload.is960 })
-      context.dispatch('restartEngine')
+      context.dispatch('setEngineOptions', { UCI_Chess960: payload.is960, engineID: 1 })
+      context.dispatch('restartEngine', 1)
     },
     initializeStore (context) {
       if (localStorage.engines) {
@@ -686,7 +689,7 @@ export const store = new Vuex.Store({
     initializeBoard (context) {
       context.commit('newBoard')
       context.dispatch('updateBoard')
-      context.dispatch('changeEngine', context.getters.availableEngines[0].name)
+      context.dispatch('changeEngine', { engineName: context.getters.availableEngines[0].name, engineID: 1 })
       context.commit('initialized', true)
     },
     updateBoard (context) {
@@ -744,9 +747,10 @@ export const store = new Vuex.Store({
       }
       context.commit('deleteFromMoves', payload)
     },
-    resetEngineData (context) {
-      context.commit('resetMultiPV')
-      context.commit('resetEngineStats')
+    resetEngineData (context, payload) {
+      const engineID = payload
+      context.commit('resetMultiPV', engineID)
+      context.commit('resetEngineStats', engineID)
     },
     setPvEParam (context, payload) {
       context.commit('PvEParam', payload)
@@ -775,14 +779,39 @@ export const store = new Vuex.Store({
     setResized9x10height (context, payload) {
       context.commit('resized9x10height', payload)
     },
-    goEngine (context) {
+    defaultSettings (context, payload) {
+      const { engineInfo, engineID } = payload
+      // put the default values of the engine into engineSettings
+      const settings = {}
+      for (const option of engineInfo.options) {
+        if (!filteredSettings.includes(option.name)) {
+          switch (option.type) {
+            case 'check':
+              settings[option.name] = option.default === 'true'
+              break
+            case 'spin':
+            case 'combo':
+              settings[option.name] = option.default
+              break
+            case 'string':
+              settings[option.name] = option.default || ''
+              break
+          }
+        }
+      }
+      context.commit('engineSettings', { engineID, settings })
+    },
+    goEngine (context, payload) {
+      const engineID = payload
+      const engine = context.getters.computeEngine(engineID)
       engine.send('go infinite')
-      context.commit('setEngineClock')
-      context.commit('active', true)
+      context.commit('setEngineClock', engineID)
+      context.commit('active_new', { active: true, engineID })
     },
     goEnginePvE (context) {
+      const engine = context.getters.computeEngine(1)
       engine.send(context.getters.PvEParam)
-      context.commit('setEngineClock')
+      context.commit('setEngineClock', 1)
     },
     PvEMakeMove (context, payload) {
       const state = context.state
@@ -794,47 +823,50 @@ export const store = new Vuex.Store({
       context.commit('PvE', true)
     },
     stopEnginePvE (context) {
+      const engine = context.getters.computeEngine(1)
       engine.send('stop')
     },
     PvEfalse (context) {
       context.commit('PvE', false)
       if (!context.getters.turn) {
-        context.dispatch('stopEngine')
+        context.dispatch('stopEngine', 1)
       } else {
-        context.commit('resetEngineTime')
+        context.commit('resetEngineTime', 1)
         context.commit('active_new', { active: false, engineID: 1 })
       }
-      context.dispatch('resetEngineData')
+      context.dispatch('resetEngineData', 1)
     },
-    stopEngine (context) {
+    stopEngine (context, payload) {
+      const engineID = payload
+      const engine = context.getters.computeEngine(engineID)
       engine.send('stop')
-      context.commit('resetEngineTime')
-      context.commit('active', false)
+      context.commit('resetEngineTime', engineID)
+      context.commit('active_new', { active: false, engineID })
     },
-    restartEngine (context) {
-      context.dispatch('resetEngineData')
-      if (context.getters.active && !context.getters.PvE) {
-        context.dispatch('stopEngine')
-        context.dispatch('position')
-        context.dispatch('goEngine')
-      } else if (context.getters.active && context.getters.PvE && !context.getters.turn) {
-        context.dispatch('position')
+    restartEngine (context, payload) {
+      const engineID = payload
+      context.dispatch('resetEngineData', engineID)
+      if (context.getters.active_new(engineID) && !context.getters.PvE) {
+        context.dispatch('stopEngine', engineID)
+        context.dispatch('position', engineID)
+        context.dispatch('goEngine', engineID)
+      } else if (context.getters.active_new(engineID) && context.getters.PvE && !context.getters.turn) {
+        context.dispatch('position', engineID)
         context.dispatch('goEnginePvE')
       }
     },
-    position (context) {
+    position (context, payload) {
+      const engineID = payload
+      const engine = context.getters.computeEngine(engineID)
       engine.send(`position fen ${context.getters.fen}`)
       const eve = new CustomEvent('position', { detail: { fen: context.getters.fen } })
       document.dispatchEvent(eve)
-    },
-    sendEngineCommand (_, payload) {
-      engine.send(payload)
     },
     fen (context, payload) {
       if (context.state.fen !== payload) {
         context.commit('fen', payload)
         context.dispatch('updateBoard')
-        context.dispatch('restartEngine')
+        context.dispatch('restartEngine', 1)
       }
     },
     fenField (context, payload) {
@@ -842,7 +874,7 @@ export const store = new Vuex.Store({
         if (context.state.fen !== payload) {
           context.commit('fen', payload)
           context.dispatch('updateBoard')
-          context.dispatch('restartEngine')
+          context.dispatch('restartEngine', 1)
           context.commit('newBoard', { fen: payload })
           let index = 1
           while (payload[payload.length - index] !== ' ') {
@@ -911,10 +943,10 @@ export const store = new Vuex.Store({
 
         // prepare engine
         if (context.getters.active_new(1)) {
-          context.dispatch('stopEngine')
+          context.dispatch('stopEngine', 1)
         }
-        context.dispatch('resetEngineData')
-        const oldEngine = context.getters.selectedEngine
+        context.dispatch('resetEngineData', 1)
+        const oldEngine = context.getters.selectedEngine(1)
 
         // update variant
         context.commit('variant', payload)
@@ -932,22 +964,21 @@ export const store = new Vuex.Store({
         const newEngine = typeof last === 'string'
           ? last
           : (oldEngine && oldEngine.variants.includes(payload) ? oldEngine.name : context.getters.availableEngines[0].name)
-        context.dispatch('changeEngine', newEngine).then(() => {
-          context.dispatch('setEngineOptions', { UCI_Variant: payload })
+        context.dispatch('changeEngine', { engineName: newEngine, engineID: 1 }).then(() => {
+          context.dispatch('setEngineOptions', { UCI_Variant: payload, engineID: 1 })
         })
       }
     },
     set960 (context, payload) {
       context.commit('selectedGame', null)
-      context.commit('resetMultiPV')
+      context.commit('resetMultiPV', 1)
       context.commit('newBoard', {
         fen: payload.fen,
         is960: payload.is960
       })
-      context.dispatch('setEngineOptions', { UCI_Chess960: payload.is960 })
+      context.dispatch('setEngineOptions', { UCI_Chess960: payload.is960, engineID: 1 })
     },
     async addEngine (context, payload) {
-      console.log('addEngine', payload)
       // discover the variants by running the engine
       const { name, binary, cwd, logo } = payload
       const info = await engine.run(binary, cwd)
@@ -1026,36 +1057,41 @@ export const store = new Vuex.Store({
     },
     async changeEngine (context, payload) {
       console.warn('changeEngine', payload)
-      const id = payload
+      const { engineName, engineID } = payload
       // always update selected engines
       const selected = {
         ...context.state.selectedEngines,
-        [context.getters.variant]: id
+        [context.getters.variant]: engineName
       }
       context.commit('selectedEngines', selected)
 
       // only change engine when its a different one
-      if (context.state.activeEngine !== id) {
-        context.state.activeEngine = id
+      if (context.getters.activeEngine(engineID) !== engineName) {
+        context.commit('activeEngine', { activeEngine: engineName, engineID })
         context.dispatch('runBinary', {
-          binary: context.getters.engineBinary,
-          cwd: context.getters.selectedEngine.cwd
+          binary: context.getters.engineBinary(engineID),
+          cwd: context.getters.selectedEngine(engineID).cwd,
+          engineID
         })
       }
     },
     async runBinary (context, payload) {
       console.log('runBinary', payload)
-      const { binary, cwd } = payload
-      if (context.getters.active) {
-        context.commit('active', false)
+      const { binary, cwd, engineID } = payload
+      const engine = context.getters.computeEngine(engineID)
+      if (context.getters.active_new(engineID)) {
+        context.commit('active_new', { active: false, engineID })
       }
-      context.commit('clearIO')
-      await context.dispatch('resetEngineData')
-      context.commit('engineInfo', await engine.run(binary, cwd))
-      await context.dispatch('initEngineOptions')
+      context.commit('clearIO', engineID)
+      await context.dispatch('resetEngineData', engineID)
+      const engineInfo = await engine.run(binary, cwd)
+      context.commit('engineInfo', { engineInfo, engineID })
+      context.dispatch('defaultSettings', { engineInfo, engineID })
+      await context.dispatch('initEngineOptions', engineID)
     },
-    initEngineOptions (context) {
-      console.log('initEngineOptions', context.state.activeEngine)
+    initEngineOptions (context, payload) {
+      const engineID = payload
+      console.log('initEngineOptions', context.getters.activeEngine(engineID))
       const options = {
         // variant & 960 are handled separately and always set
         UCI_Variant: context.getters.variant,
@@ -1064,59 +1100,40 @@ export const store = new Vuex.Store({
         // multi pv 5 is default
         MultiPV: 5
       }
-      const stored = localStorage.getItem('engine' + context.state.activeEngine)
+      const stored = localStorage.getItem('engine' + context.getters.activeEngine(engineID))
       if (stored) {
         Object.assign(options, JSON.parse(stored))
       }
 
       // this will update the settings in store & local storage
-      context.dispatch('setEngineOptions', options)
+      context.dispatch('setEngineOptions', { engineID, ...options })
     },
     setEngineOptions (context, payload) {
-      if (payload.engineID) {
-        const engineID = payload.engineID
-        delete payload.engineID
-        const engine = context.state.analysisEngines[engineID-1]
-        if (engine.active) {
-          context.dispatch('stopEngine')
-        }
-        context.dispatch('resetEngineData')
-        for (const [name, value] of Object.entries(payload)) {
-          checkOption(engine.engineInfo.options, name, value)
-          if (value !== undefined && value !== null) {
-            if (!filteredSettings.includes(name)) {
-              this.commit('setEngineOption', { engineID, name, value })
-              context.state.engineSettings[name] = value
-            }
-            engine.send(`setoption name ${name} value ${value}`)
-          } else {
-            engine.send(`setoption name ${name}`)
-          }
-        }
-        localStorage.setItem('engine' + context.state.activeEngine, JSON.stringify(context.state.engineSettings))
-      } else { // old code, delete below
-        if (context.getters.active && !context.getters.PvE) {
-          context.dispatch('stopEngine')
-        } else if (context.getters.active && context.getters.PvE && !context.getters.turn) {
-          context.dispatch('stopEngine')
-        }
-        context.dispatch('resetEngineData')
-        for (const [name, value] of Object.entries(payload)) {
-          checkOption(context.state.engineInfo.options, name, value)
-          if (value !== undefined && value !== null) {
-            if (!filteredSettings.includes(name)) {
-              context.state.engineSettings[name] = value
-            }
-            engine.send(`setoption name ${name} value ${value}`)
-          } else {
-            engine.send(`setoption name ${name}`)
-          }
-        }
-        localStorage.setItem('engine' + context.state.activeEngine, JSON.stringify(context.state.engineSettings))
+      const engineID = payload.engineID
+      delete payload.engineID
+      const analysisEngine = context.state.analysisEngines[engineID-1]
+      const engine = context.getters.computeEngine(engineID)
+      if (analysisEngine.active) {
+        context.dispatch('stopEngine', engineID)
       }
+      context.dispatch('resetEngineData', engineID)
+      for (const [name, value] of Object.entries(payload)) {
+        checkOption(analysisEngine.engineInfo.options, name, value)
+        if (value !== undefined && value !== null) {
+          if (!filteredSettings.includes(name)) {
+            this.commit('setEngineOption', { engineID, name, value })
+          }
+          engine.send(`setoption name ${name} value ${value}`)
+        } else {
+          engine.send(`setoption name ${name}`)
+        }
+      }
+      localStorage.setItem('engine' + context.getters.activeEngine(engineID), JSON.stringify(analysisEngine.engineSettings))
     },
     addAnalysisEngine (context) {
       context.commit('addAnalysisEngine')
+      const engineID = context.state.analysisEngines.length
+      context.dispatch('addEngineWatchers', engineID)
     },
     removeAnalysisEngine (context) {
       context.commit('removeAnalysisEngine')
@@ -1135,8 +1152,25 @@ export const store = new Vuex.Store({
           break
         }
       }
-      const engineInfo = await context.state.analysisEngines[engineID-1].engine.run(availableEngines[index].binary, availableEngines[index].cwd)
+      const engine = context.getters.computeEngine(engineID)
+      const engineInfo = await engine.run(availableEngines[index].binary, availableEngines[index].cwd)
       context.commit('setEngineInfo', { engineInfo, engineID })
+    },
+    async addEngineWatchers (context, payload) {
+      const engineID = payload
+      const engine = context.getters.computeEngine(engineID)
+
+      // setup debug and error output
+      //engine.on('debug', (...msgs) => console.log('%c[Main Engine] Debug:', 'color: #82aaff; font-weight: 700;', ...msgs))
+      engine.on('error', (...msgs) => console.error('%c[Main Engine]', 'color: #82aaff; font-weight: 700;', ...msgs))
+      //engine.on('eval-debug', (...msgs) => console.log('%c[Eval Engine] Debug:', 'color: #9580ff; font-weight: 700;', ...msgs))
+      engine.on('eval-error', (...msgs) => console.error('%c[Eval Engine]', 'color: #9580ff; font-weight: 700;', ...msgs))
+
+      // capture engine info
+      engine.on('info', info => store.dispatch('updateMultiPV', { info, engineID }))
+      if (engineID == 1) {
+        engine.on('bestmove', move => store.dispatch('PvEMakeMove', move))
+      }
     },
     idName (context, payload) {
       context.commit('idName', payload)
@@ -1145,55 +1179,58 @@ export const store = new Vuex.Store({
       context.commit('idAuthor', payload)
     },
     updateMultiPV (context, payload) {
+      const { info, engineID } = payload
+
       // ignore pv updates when engine is expected to be inactive
-      if (!context.state.active) {
+      if (!context.getters.active_new(engineID)) {
         return
       }
+
       // update engine stats
-      const stats = { ...context.state.engineStats }
+      const stats = { ...context.state.analysisEngines[engineID-1].engineStats }
       for (const key of Object.keys(stats)) {
-        if (key in payload) {
-          stats[key] = payload[key]
+        if (key in info) {
+          stats[key] = info[key]
         }
       }
-      context.commit('engineStats', stats)
+      context.commit('engineStats', { stats, engineID })
 
       // update pvline
-      if ('pv' in payload) {
-        const multipv = context.getters.multipv.slice(0)
+      if ('pv' in info) {
+        const multipv = context.getters.multipv(engineID).slice(0)
 
         // handle checkmate
-        if (payload.mate === 0) {
-          multipv[0] = { mate: payload.mate }
+        if (info.mate === 0) {
+          multipv[0] = { mate: info.mate }
         } else {
-          const ucimove = payload.pv.split(/\s/)[0]
+          const ucimove = info.pv.split(/\s/)[0]
           const { board } = context.state
 
           // assert first move is valid
           if (board.legalMoves().includes(ucimove)) {
             const pvline = {
-              cp: payload.cp,
-              mate: payload.mate,
-              wdl: payload.wdl,
-              pvUCI: payload.pv,
+              cp: info.cp,
+              mate: info.mate,
+              wdl: info.wdl,
+              pvUCI: info.pv,
               ucimove
             }
             try {
-              pvline.pv = board.variationSan(payload.pv)
+              pvline.pv = board.variationSan(info.pv)
             } catch (err) {
               // currently invalid moves cause ffish to error mid calculation and fail to reset the fen
               // so to avoid getting stuck with a future fen, we reset the board fen on error
               board.setFen(context.state.fen)
-              console.warn('Invalid engine pv move.\nFEN:', board.fen(), '\nPV:', payload.pv)
+              console.warn('Invalid engine pv move.\nFEN:', board.fen(), '\nPV:', info.pv)
             }
-            if (payload.multipv === undefined) {
+            if (info.multipv === undefined) {
               multipv[0] = pvline
             } else {
-              multipv[payload.multipv - 1] = pvline
+              multipv[info.multipv - 1] = pvline
             }
           }
         }
-        context.commit('multipv', multipv)
+        context.commit('multipv', { lines: multipv, engineID })
       }
     },
     loadedGames (context, payload) {
@@ -1249,7 +1286,7 @@ export const store = new Vuex.Store({
         }
       }
       context.dispatch('updateBoard')
-      context.dispatch('setEngineOptions', { UCI_Chess960: is960 })
+      context.dispatch('setEngineOptions', { UCI_Chess960: is960, engineID: 1 })
       context.commit('openedPGN', false)
     },
     increment (context, payload) {
@@ -1327,6 +1364,12 @@ export const store = new Vuex.Store({
     active_new (state) {
       return (engineID) => state.analysisEngines[engineID-1].active
     },
+    activeEngine (state) {
+      return (engineID) => state.analysisEngines[engineID-1].activeEngine
+    },
+    computeEngine (state) {
+      return (engineID) => state.analysisEngines[engineID-1].engine
+    },
     PvE (state) {
       return state.PvE
     },
@@ -1393,10 +1436,10 @@ export const store = new Vuex.Store({
         .filter(engine => engine.variants && engine.variants.includes(getters.variant))
     },
     selectedEngine (state) {
-      return { name: state.activeEngine, ...state.allEngines[state.activeEngine] }
+      return (engineID) => ({ name: state.analysisEngines[engineID-1].activeEngine, ...state.allEngines[state.analysisEngines[engineID-1].activeEngine] })
     },
     engineBinary (state, getters) {
-      return getters.selectedEngine.binary
+      return (engineID) => getters.selectedEngine(engineID).binary
     },
     engineName (state) {
       return (engineID) => state.analysisEngines[engineID-1].engineInfo.name
@@ -1411,7 +1454,7 @@ export const store = new Vuex.Store({
       return state.engineSettings
     },
     multipv (state) {
-      return state.multipv
+      return (engineID) => state.analysisEngines[engineID-1].multipv
     },
     hoveredpv (state) {
       return state.hoveredpv
@@ -1420,90 +1463,80 @@ export const store = new Vuex.Store({
       return state.multipv[0].cp
     },
     depth (state) {
-      return state.engineStats.depth
+      return (engineID) => state.analysisEngines[engineID-1].engineStats.depth
     },
     nps (state) {
-      return state.engineStats.nps
+      return (engineID) => state.analysisEngines[engineID-1].engineStats.nps
     },
     seldepth (state) {
-      return state.engineStats.seldepth
+      return (engineID) => state.analysisEngines[engineID-1].engineStats.seldepth
     },
     nodes (state) {
-      return state.engineStats.nodes
+      return (engineID) => state.analysisEngines[engineID-1].engineStats.nodes
     },
     hashfull (state) {
-      return state.engineStats.hashfull
+      return (engineID) => state.analysisEngines[engineID-1].engineStats.hashfull
     },
     tbhits (state) {
-      return state.engineStats.tbhits
+      return (engineID) => state.analysisEngines[engineID-1].engineStats.tbhits
     },
     time (state) {
       return state.engineStats.time
     },
     enginetime (state) {
-      return state.enginetime
+      return (engineID) => state.analysisEngines[engineID-1].enginetime
     },
     pv (state) {
       return state.multipv[0].pv
     },
     cpForWhite (state) {
-      return calcForSide(state.multipv[0].cp, state.turn)
+      return (engineID) => calcForSide(state.analysisEngines[engineID-1].multipv[0].cp, state.turn)
     },
     cpForWhiteStr (state, getters) {
-      const currentMove = getters.currentMove[0]
-      const { mate } = state.multipv[0]
+      return (engineID) => {
+        const currentMove = getters.currentMove[0]
+        const { mate } = state.analysisEngines[engineID-1].multipv[0]
 
-      // TODO: Update this block when ffish.board.is_terminal() or ffish.board.check_result() is available
-      // Temporary fix, as lang as we don't have an `is_terminal()` or `check_result` function
-      // if the SAN in the pgn is the same than the SAN in states.moves
-      // and we are at the last move, return pgn result
-      if (state.selectedGame) {
-        const pgnBoard = new ffish.Board(state.variant, state.startFen)
+        // TODO: Update this block when ffish.board.is_terminal() or ffish.board.check_result() is available
+        // Temporary fix, as lang as we don't have an `is_terminal()` or `check_result` function
+        // if the SAN in the pgn is the same than the SAN in states.moves
+        // and we are at the last move, return pgn result
+        if (state.selectedGame) {
+          const pgnBoard = new ffish.Board(state.variant, state.startFen)
 
-        const pgnMoves = state.selectedGame.mainlineMoves()
-        const san = pgnBoard.variationSan(pgnMoves, ffish.Notation.SAN, false)
-        let str = ''
-        state.moves.forEach(move => { str += move.name })
-        const lastMove = state.moves[state.moves.length - 1]
-        if (san.replace(/ /g, '') === str.replace(/ /g, '')) {
-          if (lastMove === currentMove && lastMove.ply === currentMove.ply) {
-            return state.selectedGame.headers('Result')
+          const pgnMoves = state.selectedGame.mainlineMoves()
+          const san = pgnBoard.variationSan(pgnMoves, ffish.Notation.SAN, false)
+          let str = ''
+          state.moves.forEach(move => { str += move.name })
+          const lastMove = state.moves[state.moves.length - 1]
+          if (san.replace(/ /g, '') === str.replace(/ /g, '')) {
+            if (lastMove === currentMove && lastMove.ply === currentMove.ply) {
+              return state.selectedGame.headers('Result')
+            }
           }
         }
-      }
 
-      if (typeof mate === 'number') {
-        return `#${calcForSide(mate, state.turn)}`
-      } else if (state.board != null && state.board.isGameOver()) {
-        return state.board.result()
-      } else {
-        return cpToString(getters.cpForWhite)
+        if (typeof mate === 'number') {
+          return `#${calcForSide(mate, state.turn)}`
+        } else if (state.board != null && state.board.isGameOver()) {
+          return state.board.result()
+        } else {
+          return cpToString(getters.cpForWhite(engineID))
+        }
       }
     },
     cpForWhitePerc (state, getters) {
-      const currentMove = getters.currentMove[0]
-      const { mate } = state.multipv[0]
-      if (typeof mate === 'number') {
-        return (calcForSide(Math.sign(mate), state.turn) + 1) / 2
-      } else if (currentMove && currentMove.name.includes('#')) {
-        return state.turn ? 0 : 1
-      } else {
-        return 1 / (1 + Math.exp(-0.003 * getters.cpForWhite))
+      return (engineID) => {
+        const currentMove = getters.currentMove[0]
+        const { mate } = state.analysisEngines[engineID-1].multipv[0]
+        if (typeof mate === 'number') {
+          return (calcForSide(Math.sign(mate), state.turn) + 1) / 2
+        } else if (currentMove && currentMove.name.includes('#')) {
+          return state.turn ? 0 : 1
+        } else {
+          return 1 / (1 + Math.exp(-0.003 * getters.cpForWhite(engineID)))
+        }
       }
-    },
-    winPerc (state, getters) {
-      const currentMove = getters.currentMove[0]
-      const { mate } = state.multipv[0]
-      if (typeof mate === 'number') {
-        return (calcForSide(Math.sign(mate), state.turn) + 1) / 2
-      } else if (currentMove && currentMove.name.includes('#')) {
-        return state.turn ? 0 : 1
-      } else {
-        return 1 / (1 + Math.exp(-0.003 * getters.cpForWhite))
-      }
-    },
-    drawPerc (state, getters) {
-
     },
     message (state) {
       return state.message.toUpperCase()
@@ -1621,14 +1654,4 @@ ffish.onRuntimeInitialized = () => {
   store.dispatch('initializeBoard')
 }
 
-(async () => {
-  // setup debug and error output
-  //engine.on('debug', (...msgs) => console.log('%c[Main Engine] Debug:', 'color: #82aaff; font-weight: 700;', ...msgs))
-  engine.on('error', (...msgs) => console.error('%c[Main Engine]', 'color: #82aaff; font-weight: 700;', ...msgs))
-  //engine.on('eval-debug', (...msgs) => console.log('%c[Eval Engine] Debug:', 'color: #9580ff; font-weight: 700;', ...msgs))
-  engine.on('eval-error', (...msgs) => console.error('%c[Eval Engine]', 'color: #9580ff; font-weight: 700;', ...msgs))
-
-  // capture engine info
-  engine.on('info', info => store.dispatch('updateMultiPV', info))
-  engine.on('bestmove', move => store.dispatch('PvEMakeMove', move))
-})()
+store.dispatch('addEngineWatchers', 1)

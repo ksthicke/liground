@@ -94,7 +94,6 @@ export default {
   },
   data () {
     return {
-      lines: [],
       multipvMulti: [
         {
           cp: 0,
@@ -102,7 +101,6 @@ export default {
           ucimove: ''
         }
       ],
-      pvcount: 0,
       originalMultiPV: 1,
       showOnlyOnePvLine: false, // Flag to show only one PvLine
       showExpandIcon: false, // Flag to show expand-down icon
@@ -123,21 +121,32 @@ export default {
       }
       return null
     },
-    ...mapGetters(['moves', 'fen', 'multipv', 'engineSettings', 'mainFirstMove', 'enginetime', 'PvEValue', 'PvEParam', 'PvEInput', 'nodes', 'depth', 'seldepth', 'engineAuthor', 'engineName'])
+    pvcount () {
+      return this.$store.state.analysisEngines[this.engineID-1].engineSettings.MultiPV
+    },
+    lines () {
+      const count = this.pvcount
+      const multiPVMulti = this.multipv(this.engineID)
+      const lines = multiPVMulti.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
+      const thelines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
+      if (this.showOnlyOnePvLine) {
+        return thelines.slice(1, 2)
+      } else {
+        return thelines
+      }
+    },
+    ...mapGetters(['moves', 'fen', 'engineSettings', 'mainFirstMove', 'engineAuthor', 'engineName', 'multipv'])
   },
   watch: {
     pvcount () {
       let i
-      this.lines = []
+      //this.lines = []
       for (i = 0; i < this.pvcount; i++) {
-        this.lines.push(0)
+        //this.lines.push(0)
       }
     },
     multipvMulti () {
       this.updateMultiLines()
-    },
-    multipv () {
-      this.updateLines()
     },
     engineSettings () {
       this.originalMultiPV = this.engineSettings.MultiPV
@@ -146,11 +155,11 @@ export default {
   },
   methods: {
     fillpvCount (payload) {
-      this.pvcount = payload
-      this.originalMultiPV = payload
+      /*this.pvcount = payload
+      this.originalMultiPV = payload*/
     },
     fillPV (payload) {
-      this.multipvMulti = payload
+      //this.multipvMulti = payload
     },
     asMain (target, data) {
       const mainLine = data.line.pvUCI.split(' ')
@@ -175,24 +184,24 @@ export default {
       this.$store.dispatch('push', { move: line.ucimove, prev: prevMov })
     },
     updateLines () {
-      if (this.engineID === 1) {
+      /*if (this.engineID === 1) {
         const count = this.engineSettings.MultiPV
         const lines = this.multipv.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
         this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
         if (this.showOnlyOnePvLine) {
           this.lines = this.lines.slice(1, 2)
         }
-      }
+      }*/
     },
     updateMultiLines () {
-      if (this.engineID !== 1) {
+      /*if (this.engineID !== 1) {
         const count = this.pvcount
         const lines = this.multipvMulti.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
         this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
         if (this.showOnlyOnePvLine) {
           this.lines = this.lines.slice(1, 2)
         }
-      }
+      }*/
     },
     toggle () {
       this.showExpandIcon = !this.showExpandIcon

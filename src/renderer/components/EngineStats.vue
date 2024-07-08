@@ -5,7 +5,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import VueTableDynamic from 'vue-table-dynamic'
 
 export default {
@@ -16,76 +15,42 @@ export default {
   components: {
     VueTableDynamic
   },
-  data () {
-    return {
-      parentEngineStats: {
-        depth: 0,
-        seldepth: 0,
-        nodes: 0,
-        nps: 0,
-        hashfull: 0,
-        tbhits: 0,
-        enginetime: 0
-      }
-    }
-  },
-
   computed: {
-    ...mapGetters(['seldepth', 'nps', 'nodes', 'enginetime', 'hashfull', 'tbhits']),
     depth () {
-      return this.$store.getters.depth
+      return this.$store.getters.depth(this.engineID)
     },
     seldepth () {
-      return this.$store.getters.seldepth
+      return this.$store.getters.seldepth(this.engineID)
     },
     nps () {
-      return this.$store.getters.nps
+      return this.$store.getters.nps(this.engineID)
     },
     nodes () {
-      return this.$store.getters.nodes
+      return this.$store.getters.nodes(this.engineID)
     },
     enginetime () {
-      return this.$store.getters.enginetime
+      return this.$store.getters.enginetime(this.engineID)
     },
     hashfull () {
-      return this.$store.getters.hashfull
+      return this.$store.getters.hashfull(this.engineID)
     },
     tbhits () {
-      return this.$store.getters.tbhits
+      return this.$store.getters.tbhits(this.engineID)
     },
-
     params () {
-      if (this.engineID === 1) {
-        return {
-          data: [
-            ['Depth / Sel. Depth', 'Nodes/s', 'Nodes', 'Time', 'Hash', 'TB Hits'],
-            [this.depth + ' / ' + this.seldepth, this.parse(this.nps) + 'nps', this.parse(this.nodes), this.parseTime(this.enginetime), this.hashfull, this.parse(this.tbhits)]
-          ],
-          columnWidth: [{ column: 0, width: 150 }],
-          header: 'row',
-          border: true,
-          stripe: true
-        }
-      } else {
-        const { depth, seldepth, nps, nodes, enginetime, hashfull, tbhits } = this.parentEngineStats
-        return {
-          data: [
-            ['Depth / Sel. Depth', 'Nodes/s', 'Nodes', 'Time', 'Hash', 'TB Hits'],
-            [depth + ' / ' + seldepth, this.parse(nps) + 'nps', this.parse(nodes), this.parseTime(enginetime), hashfull, this.parse(tbhits)]
-          ],
-          columnWidth: [{ column: 0, width: 150 }],
-          header: 'row',
-          border: true,
-          stripe: true
-        }
+      return {
+        data: [
+          ['Depth / Sel. Depth', 'Nodes/s', 'Nodes', 'Time', 'Hash', 'TB Hits'],
+          [this.depth + ' / ' + this.seldepth, this.parse(this.nps) + 'nps', this.parse(this.nodes), this.parseTime(this.enginetime), this.parseHash(this.hashfull), this.parse(this.tbhits)]
+        ],
+        columnWidth: [{ column: 0, width: 150 }],
+        header: 'row',
+        border: true,
+        stripe: true
       }
     }
   },
   methods: {
-    fillStats (payload) {
-      console.warn('fillStats', payload)
-      this.parentEngineStats = payload
-    },
     parse (value) {
       if (value > 1000000) {
         value /= 1000000
@@ -101,6 +66,9 @@ export default {
     parseTime (value) {
       const date = new Date(Number(value))
       return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`
+    },
+    parseHash (value) {
+      return `${value/10}%`
     }
   }
 }
