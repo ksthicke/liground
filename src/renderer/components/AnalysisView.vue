@@ -1,8 +1,6 @@
 <template>
   <div class="analysis">
-    <AnalysisHead
-      @resetMultiEngine="resetEngines"
-    />
+    <AnalysisHead/>
     <AnalysisContainer
       v-for="(engine, index) in this.analysisEngines"
       ref="analysiscontainer"
@@ -16,7 +14,7 @@
     />
     <div class="b">
       <button
-        class="buttonRed"
+        :class="(this.numberOfAnalysisEngines > 1) ? 'buttonRed' : 'buttonRedDisabled'"
         @click="removeEngine"
       >
         <b>Remove Engine</b>
@@ -32,7 +30,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import AnalysisHead from './AnalysisHead'
 import AnalysisContainer from './AnalysisContainer.vue'
 
@@ -44,19 +42,11 @@ export default {
   },
   computed: {
     ...mapState(['analysisEngines']),
-    numberOfEngines () {
-      return this.analysisEngines.length
-    }
+    ...mapGetters(['numberOfAnalysisEngines'])
   },
   methods: {
-    resetEngines () {
-      let i = 1
-      for (i; i < this.counter; i++) {
-        this.$refs.analysiscontainer[i].resetThisEngine()
-      }
-    },
     removeEngine () {
-      if (this.numberOfEngines > 1) {
+      if (this.numberOfAnalysisEngines > 1) {
         this.$store.dispatch('removeAnalysisEngine')
       }
     },
@@ -100,6 +90,21 @@ export default {
 }
 .buttonRed:hover {
   background-color: #8b1919;
+  cursor: pointer;
+}
+.buttonRedDisabled {
+  background-color: #c9888e; /* Grayed-out red */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px Avenir;
+  border-radius: 7px;
+}
+.buttonRedDisabled:hover {
+  cursor: not-allowed;
 }
 .b {
   margin-top: 40px;

@@ -60,9 +60,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import { Engine } from '../engine'
-
 export default {
   name: 'EngineConsole',
   props: {
@@ -74,54 +71,20 @@ export default {
   },
   data () {
     return {
-      resetting: false,
       input: '',
       io: Object.freeze([]),
       rendered: [],
       lastScrollPosition: 0,
       fullWidth: 0,
       autoScroll: true,
-      newEngine: null,
-      engineStats: {
-        depth: 0,
-        seldepth: 0,
-        nodes: 0,
-        nps: 0,
-        hashfull: 0,
-        tbhits: 0,
-        enginetime: 0
-      },
-      enginetime: 0,
-      enginetimeID: null,
-      engineInfo: {
-        name: '',
-        author: '',
-        options: []
-      },
-      multiPV: [
-        {
-          cp: 0,
-          pv: '',
-          ucimove: ''
-        }
-      ],
-      enginesettings: {},
-      filteredSettings: ['UCI_Variant', 'UCI_Chess960'],
-      engineName: null,
-      localStorageSettings: null,
-      currentlySwitchingVariant: false,
       showConsole: true, // Flag to show Console
       showExpandIcon: false, // Flag to show expand-down icon
       showMinimizeIcon: true // Flag to show expand-up icon
     }
   },
   computed: {
-    ...mapGetters(['active_new', 'PvE', 'availableEngines', 'fen', 'turn', 'multipv', 'variant', 'is960']),
     fullHeight () {
       return this.io.length
-    },
-    engineActive () {
-      return this.active_new(this.engineID)
     },
     engine () {
       return this.$store.getters.computeEngine(this.engineID)
@@ -137,25 +100,6 @@ export default {
       return (scroller === undefined) ? 0 : scroller.offsetHeight - scroller.clientHeight
     }
   },
-  watch: {
-    /*async multipv () {
-      if (this.engineID !== 1) {
-        if (this.engineName === this.$store.getters.selectedEngine.name) {
-          if (this.localStorageSettings !== localStorage.getItem('engine' + this.engineName)) {
-            await this.initEngineOptions()
-          }
-        }
-      }
-    },*/
-    fen () {
-      if (this.engineID !== 1) {
-        this.restartEngine()
-      }
-    },
-    engineActive () {
-      this.activateEngine()
-    }
-  },
   created () {
     this.$store.subscribe((mutation) => {
       if (mutation.type === 'clearIO' && mutation.payload == this.engineID) {
@@ -167,269 +111,7 @@ export default {
     })
     this.engine.on('io', io => this.append(io))
   },
-  beforeDestroy () {
-    if (this.engineID !== 1) {
-      clearInterval(this.enginetimeID)
-      this.newEngine.send('stop')
-      this.newEngine.send('quit')
-    } else if (this.engineID === 1) {
-      this.engine.send('quit')
-    }
-  },
   methods: {
-    async resetEngine (payload) {
-      if (payload) {
-        await this.newEngine.send('stop')
-        this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
-      }
-      this.resetEngineData()
-      this.resetEngineTime()
-      this.newEngine.send('setoption name UCI_Chess960 value ' + this.is960)
-    },
-    stopEngine () {
-      this.resetEngineData()
-      this.newEngine.send('quit')
-      this.currentlySwitchingVariant = true
-    },
-    /*async calculateEngineInfo (payload) {
-      this.engineInfo = payload
-      const settings = {}
-      for (const option of payload.options) {
-        if (!this.filteredSettings.includes(option.name)) {
-          switch (option.type) {
-            case 'check':
-              settings[option.name] = option.default === 'true'
-              break
-            case 'spin':
-            case 'combo':
-              settings[option.name] = option.default
-              break
-            case 'string':
-              settings[option.name] = option.default || ''
-              break
-          }
-        }
-      }
-      this.enginesettings = settings
-    },*/
-    /*async initiliseEngineOptions () {
-      (async () => {
-        // setup debug and error output
-        //this.newEngine.on('debug', (...msgs) => console.log('%c[Main Engine] Debug:', 'color: #82aaff; font-weight: 700;', ...msgs))
-        this.newEngine.on('error', (...msgs) => console.error('%c[Main Engine]', 'color: #82aaff; font-weight: 700;', ...msgs))
-        //this.newEngine.on('eval-debug', (...msgs) => console.log('%c[Eval Engine] Debug:', 'color: #9580ff; font-weight: 700;', ...msgs))
-        this.newEngine.on('eval-error', (...msgs) => console.error('%c[Eval Engine]', 'color: #9580ff; font-weight: 700;', ...msgs))
-        // capture engine info
-        this.newEngine.on('info', info => this.calculateEngineStats(info))
-      })()
-      // this.newEngine.send('setoption name MultiPV value 5')
-    },*/
-    startClock () {
-      if (this.engineID !== 1) {
-        this.enginetimeID = setInterval(() => {
-          if (this.engineActive) {
-            this.enginetime = this.enginetime + 1000
-          }
-        }, 1000)
-      }
-    },
-    /*calculateEngineStats (payload) {
-      // ignore pv updates when engine is expected to be inactive
-      if (!this.engineActive) {
-        return
-      }
-      // update engine stats
-      const stats = { ...this.engineStats }
-      for (const key of Object.keys(stats)) {
-        if (key in payload) {
-          stats[key] = payload[key]
-        }
-      }
-      this.engineStats = stats
-      this.$emit('calculateEngineStats', this.engineStats)
-
-      // update pvline
-      if ('pv' in payload) {
-        const multipv = this.multiPV.slice(0)
-
-        // handle checkmate
-        if (payload.mate === 0) {
-          multipv[0] = { mate: payload.mate }
-        } else {
-          const ucimove = payload.pv.split(/\s/)[0]
-          const { board } = this.$store.state
-
-          // assert first move is valid
-          if (board.legalMoves().includes(ucimove)) {
-            const pvline = {
-              cp: payload.cp,
-              mate: payload.mate,
-              pvUCI: payload.pv,
-              ucimove
-            }
-            try {
-              pvline.pv = board.variationSan(payload.pv)
-            } catch (err) {
-              // currently invalid moves cause ffish to error mid calculation and fail to reset the fen
-              // so to avoid getting stuck with a future fen, we reset the board fen on error
-              board.setFen(this.fen)
-              console.warn('Invalid engine pv move.\nFEN:', board.fen(), '\nPV:', payload.pv)
-            }
-            multipv[payload.multipv - 1] = pvline
-          }
-        }
-        this.calculateMultiPV(multipv)
-      }
-    },*/
-    /*calculateMultiPV (payload) {
-      for (const pvline of payload) {
-        if (pvline) {
-          pvline.cpDisplay = typeof pvline.mate === 'number' ? `#${this.calcForSide(pvline.mate, this.turn)}` : this.cpToString(this.calcForSide(pvline.cp, this.turn))
-        }
-      }
-      this.multiPV = payload
-      this.$emit('calculateMultiPV', this.multiPV)
-    },*/
-    /*async changeBinary (event) {
-      console.warn('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!EngineConsole.vue: changeBinary', event)
-      if (this.engineID !== 1) {
-        if (this.newEngine != null) {
-          this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
-          this.newEngine.send('quit')
-          this.resetEngineData()
-        }
-        if (this.newEngine === null) {
-          this.newEngine = new Engine()
-        }
-        // this.newEngine = new Engine()
-        // TODO: more elegant way?
-        // clear io on store event
-        this.$store.subscribe((mutation) => {
-          if (mutation.type === 'clearIO') {
-            this.io = Object.freeze([])
-            this.lastScrollPosition = 0
-            this.fullWidth = 0
-            this.rerender()
-          }
-        })
-
-        // append incoming io
-        this.newEngine.on('io', io => this.append(io))
-
-        // discover sizes
-        const { scroller } = this.$refs
-        this.elSize = parseFloat(window.getComputedStyle(scroller).fontSize)
-        this.renderLength = Math.ceil((scroller.clientHeight / this.elSize) + 2 * this.bufferSize)
-        this.scrollbarSize = scroller.offsetHeight - scroller.clientHeight
-        await this.initiliseEngineOptions()
-        const currentEngine = event
-        this.engineName = currentEngine
-        if (currentEngine !== null) {
-          let index = 0
-          for (index; index < this.availableEngines.length; index++) {
-            if (this.availableEngines[index].name === currentEngine) {
-              break
-            }
-          }
-          if (currentEngine === this.availableEngines[index].name) {
-            this.io = Object.freeze([])
-            this.lastScrollPosition = 0
-            this.fullWidth = 0
-            this.rerender()
-            const temp = await this.newEngine.run(this.availableEngines[index].binary, this.availableEngines[index].cwd)
-            console.log('temp', temp)
-            this.calculateEngineInfo(await this.newEngine.run(this.availableEngines[index].binary, this.availableEngines[index].cwd))
-            await this.initEngineOptions()
-          }
-        }
-      } else if (this.engineID === 1) {
-        this.$store.subscribe((mutation) => {
-          if (mutation.type === 'clearIO') {
-            this.io = Object.freeze([])
-            this.lastScrollPosition = 0
-            this.fullWidth = 0
-            this.rerender()
-          }
-        })
-
-        // append incoming io
-
-        this.engine.on('io', io => this.append(io))
-
-        // discover sizes
-        const { scroller } = this.$refs
-        this.elSize = parseFloat(window.getComputedStyle(scroller).fontSize)
-        this.renderLength = Math.ceil((scroller.clientHeight / this.elSize) + 2 * this.bufferSize)
-        this.scrollbarSize = scroller.offsetHeight - scroller.clientHeight
-      }
-    },*/
-    async initEngineOptions () {
-      const options = {
-        // variant & 960 are handled separately and always set
-        UCI_Variant: this.$store.getters.variant,
-        UCI_Chess960: this.$store.state.board.is960(),
-
-        // multi pv 5 is default
-        MultiPV: 5
-      }
-      const stored = localStorage.getItem('engine' + this.engineName)
-      if (stored) {
-        Object.assign(options, JSON.parse(stored))
-      }
-
-      // this will update the settings
-      this.setEngineOptions(options)
-    },
-    setEngineOptions (payload) {
-      if (this.engineActive) {
-        if (this.currentlySwitchingVariant === false) {
-          this.newEngine.send('stop')
-        }
-        this.resetEngineData()
-        this.resetEngineTime()
-        this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
-      }
-      // context.dispatch('resetEngineData')
-      for (const [name, value] of Object.entries(payload)) {
-        // checkOption(context.state.engineInfo.options, name, value)
-        if (value !== undefined && value !== null) {
-          if (!this.filteredSettings.includes(name)) {
-            this.enginesettings[name] = value
-          }
-          this.newEngine.send(`setoption name ${name} value ${value}`)
-        } else {
-          this.newEngine.send(`setoption name ${name}`)
-        }
-      }
-      this.$emit('sendMultiPvCount', this.enginesettings.MultiPV)
-      this.localStorageSettings = localStorage.getItem('engine' + this.engineName)
-    },
-    /**
-    * Calculate the value for current side to move.
-    * @param {number} value CP or Mate value
-    * @param {boolean} sideToMove Current side to move (true = white)
-    */
-    calcForSide (value, sideToMove) {
-      return sideToMove ? value : -value
-    },
-    /**
-    * Convert a CP value to a display string.
-    * @param {number} cp CP value
-    */
-    cpToString (cp) {
-      if (isNaN(cp)) {
-        return ''
-      }
-      if (cp === 0) {
-        return '0.00'
-      }
-      const normalizedEval = (cp / 100).toFixed(2)
-      if (cp > 0) {
-        return `+${normalizedEval}`
-      } else {
-        return normalizedEval
-      }
-    },
     toggle () {
       this.showConsole = !this.showConsole
       this.showExpandIcon = !this.showExpandIcon
@@ -494,81 +176,8 @@ export default {
     },
     onKeyup (event) {
       if (event.key === 'Enter') {
-        if (this.engineID !== 1) {
-          this.newEngine.send(this.input)
-        } else if (this.engineID === 1) {
-          this.engine.send(this.input)
-        }
+        this.engine.send(this.input)
         this.input = ''
-      }
-    },
-    activateEngine () {
-      if (this.currentlySwitchingVariant === true) {
-        this.currentlySwitchingVariant = false
-        return
-      }
-      const switchOn = this.engineActive
-      if (switchOn) {
-        if (this.enginetime === 0 && this.engineID !== 1) {
-          this.startClock()
-        }
-        if (this.PvE && this.engineID === 1) {
-          this.$store.dispatch('active_new', { active: true, engineID: this.engineID })
-        } else {
-          if (this.engineID < 2) {
-            this.$store.dispatch('position', this.engineID)
-            this.$store.dispatch('goEngine', this.engineID)
-          } else {
-            this.newEngine.send(`position fen ${this.$store.getters.fen}`)
-            this.newEngine.send('go infinite')
-          }
-        }
-      } else {
-        if (this.engineID !== 1) {
-          this.newEngine.send('stop')
-        } else if (this.engineID === 1 && this.currentlySwitchingVariant === false) {
-          this.$store.dispatch('stopEngine', this.engineID)
-        }
-      }
-    },
-    resetEngineData () {
-      this.resetEngineStats()
-      this.resetMultiPV()
-    },
-    resetMultiPV () {
-      this.multiPV = [
-        {
-          cp: 0,
-          pv: '',
-          ucimove: ''
-        }
-      ]
-      this.$emit('calculateMultiPV', this.multiPV)
-    },
-    resetEngineStats () {
-      this.enginetime = 0
-      this.engineStats = {
-        depth: 0,
-        seldepth: 0,
-        nodes: 0,
-        nps: 0,
-        hashfull: 0,
-        tbhits: 0,
-        enginetime: 0
-      }
-      this.$emit('calculateEngineStats', this.engineStats)
-    },
-    resetEngineTime () {
-      clearInterval(this.enginetimeID)
-    },
-    restartEngine () {
-      this.resetEngineData()
-      if (this.engineActive) {
-        if (this.currentlySwitchingVariant === false) {
-          this.newEngine.send('stop')
-        }
-        this.resetEngineTime()
-        this.$store.dispatch('active_new', { active: false, engineID: this.engineID })
       }
     }
   }

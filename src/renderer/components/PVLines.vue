@@ -94,14 +94,6 @@ export default {
   },
   data () {
     return {
-      multipvMulti: [
-        {
-          cp: 0,
-          pv: '',
-          ucimove: ''
-        }
-      ],
-      originalMultiPV: 1,
       showOnlyOnePvLine: false, // Flag to show only one PvLine
       showExpandIcon: false, // Flag to show expand-down icon
       showMinimizeIcon: true // Flag to show expand-up icon
@@ -130,12 +122,12 @@ export default {
       const lines = multiPVMulti.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
       const thelines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
       if (this.showOnlyOnePvLine) {
-        return thelines.slice(1, 2)
+        return thelines.slice(0, 1)
       } else {
         return thelines
       }
     },
-    ...mapGetters(['moves', 'fen', 'engineSettings', 'mainFirstMove', 'engineAuthor', 'engineName', 'multipv'])
+    ...mapGetters(['moves', 'fen', 'mainFirstMove', 'engineAuthor', 'engineName', 'multipv'])
   },
   watch: {
     pvcount () {
@@ -144,27 +136,12 @@ export default {
       for (i = 0; i < this.pvcount; i++) {
         //this.lines.push(0)
       }
-    },
-    multipvMulti () {
-      this.updateMultiLines()
-    },
-    engineSettings () {
-      this.originalMultiPV = this.engineSettings.MultiPV
-      this.updateLines()
     }
   },
   methods: {
-    fillpvCount (payload) {
-      /*this.pvcount = payload
-      this.originalMultiPV = payload*/
-    },
-    fillPV (payload) {
-      //this.multipvMulti = payload
-    },
     asMain (target, data) {
       const mainLine = data.line.pvUCI.split(' ')
       const prevMov = this.currentMove
-      console.log(mainLine)
       this.$store.dispatch('pushMainLine', { line: mainLine, prev: prevMov })
     },
     asAlt (target, data) {
@@ -183,35 +160,10 @@ export default {
       const prevMov = this.currentMove
       this.$store.dispatch('push', { move: line.ucimove, prev: prevMov })
     },
-    updateLines () {
-      /*if (this.engineID === 1) {
-        const count = this.engineSettings.MultiPV
-        const lines = this.multipv.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
-        this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
-        if (this.showOnlyOnePvLine) {
-          this.lines = this.lines.slice(1, 2)
-        }
-      }*/
-    },
-    updateMultiLines () {
-      /*if (this.engineID !== 1) {
-        const count = this.pvcount
-        const lines = this.multipvMulti.filter(el => typeof el.pv === 'string' && el.pv.length > 0)
-        this.lines = lines.concat(Array(count ? Math.max(0, count - lines.length) : 0).fill(null))
-        if (this.showOnlyOnePvLine) {
-          this.lines = this.lines.slice(1, 2)
-        }
-      }*/
-    },
     toggle () {
       this.showExpandIcon = !this.showExpandIcon
       this.showMinimizeIcon = !this.showMinimizeIcon
       this.showOnlyOnePvLine = !this.showOnlyOnePvLine
-      if (this.engineID === 1) {
-        this.updateLines()
-      } else {
-        this.updateMultiLines()
-      }
     },
     formatEval (cpDisplay, wdlDisplay) {
       if (cpDisplay && wdlDisplay) {

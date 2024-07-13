@@ -13,7 +13,6 @@
         ref="engineselect"
         class="select"
         :engineID="this.engineID"
-        @sendSelected="changeConsole($event)"
       />
       <div>
         <RoundedSwitch
@@ -77,7 +76,6 @@ import EngineConsole from './EngineConsole'
 import MoveHistoryNode from './MoveHistoryNode'
 import RoundedSwitch from './RoundedSwitch'
 import EngineSelect from './EngineSelect'
-import ffish from 'ffish'
 
 export default {
   name: 'AnalysisContainer',
@@ -93,31 +91,8 @@ export default {
     RoundedSwitch,
     EngineSelect
   },
-  data () {
-    return {
-      currentVariant: null,
-      canceltwice: true,
-      engineStats: {
-        depth: 0,
-        seldepth: 0,
-        nodes: 0,
-        nps: 0,
-        hashfull: 0,
-        tbhits: 0,
-        enginetime: 0
-      },
-      multipv: [
-        {
-          cp: 0,
-          pv: '',
-          ucimove: ''
-        }
-      ],
-      multipvCount: 5
-    }
-  },
   computed: {
-    ...mapGetters(['active_new', 'mainFirstMove', 'PvE', 'availableEngines', 'currentMove', 'variant', 'QuickTourIndex']),
+    ...mapGetters(['active_new', 'mainFirstMove', 'QuickTourIndex']),
     isEngineActive () {
       return this.active_new(this.engineID)
     },
@@ -130,101 +105,6 @@ export default {
     },
     cpForWhiteStr () {
       return this.$store.getters.cpForWhiteStr(this.engineID)
-    },
-    cpStr () {
-      const currentMove = this.currentMove[0]
-      const { mate } = this.multipv[0]
-
-      // TODO: Update this block when ffish.board.is_terminal() or ffish.board.check_result() is available
-      // Temporary fix, as lang as we don't have an `is_terminal()` or `check_result` function
-      // if the SAN in the pgn is the same than the SAN in states.moves
-      // and we are at the last move, return pgn result
-      if (this.$store.state.selectedGame) {
-        let pgnBoard
-        if (this.$store.state.selectedGame.headers('FEN')) {
-          pgnBoard = new ffish.Board(this.$store.state.variant, this.$store.state.selectedGame.headers('FEN'))
-        } else {
-          pgnBoard = this.$store.state.board
-        }
-        const pgnMoves = this.$store.state.selectedGame.mainlineMoves()
-        const san = pgnBoard.variationSan(pgnMoves, ffish.Notation.SAN, false)
-        let str = ''
-        this.$store.state.moves.forEach(move => { str += move.name })
-        const lastMove = this.$store.state.moves[this.$store.moves.length - 1]
-        if (san.replace(/ /g, '') === str.replace(/ /g, '')) {
-          if (lastMove === currentMove && lastMove.ply === currentMove.ply) {
-            return this.$store.state.selectedGame.headers('Result')
-          }
-        }
-      }
-
-      if (typeof mate === 'number') {
-        return `#${this.calcForSide(mate, this.$store.state.turn)}`
-      } else if (currentMove && currentMove.name.includes('#')) {
-        return this.$store.state.turn ? '0-1' : '1-0'
-      } else if (this.$store.state.legalMoves.length === 0) {
-        return '1/2-1/2'
-      } else {
-        return this.cpToString(this.calcForSide(this.multipv[0].cp, this.$store.state.turn))
-      }
-    }
-  },
-  watch: {
-    reset () {
-      this.$store.commit('resetMultiPV', 1)
-    }
-  },
-  mounted () {
-    this.currentVariant = this.variant
-  },
-  methods: {
-    async resetThisEngine () {
-      await this.$refs.console.resetEngine(this.isEngineActive)
-      if (this.isEngineActive) {
-        this.changeState()
-      }
-    },
-    async changeConsole (event) {
-      if (this.engineID === 1 && this.canceltwice) {
-        console.log('error here?', JSON.stringify(this.$refs,null,4))
-        this.$refs.console.changeBinary(event)
-        this.canceltwice = false
-      } else if (this.engineID !== 1) {
-        if (this.currentVariant !== this.variant) {
-          this.$refs.console.stopEngine()
-          this.currentVariant = this.variant
-        }
-        await this.$refs.console.changeBinary(event)
-      }
-    },
-    changeState () {
-      //this.isEngineActive = !this.isEngineActive
-    },
-    /**
-    * Calculate the value for current side to move.
-    * @param {number} value CP or Mate value
-    * @param {boolean} sideToMove Current side to move (true = white)
-    */
-    calcForSide (value, sideToMove) {
-      return sideToMove ? value : -value
-    },
-    /**
-    * Convert a CP value to a display string.
-    * @param {number} cp CP value
-    */
-    cpToString (cp) {
-      if (isNaN(cp)) {
-        return ''
-      }
-      if (cp === 0) {
-        return '0.00'
-      }
-      const normalizedEval = (cp / 100).toFixed(2)
-      if (cp > 0) {
-        return `+${normalizedEval}`
-      } else {
-        return normalizedEval
-      }
     }
   }
 }

@@ -462,9 +462,6 @@ export const store = new Vuex.Store({
     removeAnalysisEngine (state) {
       state.analysisEngines.pop()
     },
-    changeAnalysisEngine (state, payload) {
-
-    },
     hoveredpv (state, payload) {
       state.hoveredpv = payload
     },
@@ -653,7 +650,7 @@ export const store = new Vuex.Store({
       context.commit('resetMultiPV', 1)
       context.commit('resetBoard', payload)
       context.dispatch('setEngineOptions', { UCI_Chess960: payload.is960, engineID: 1 })
-      context.dispatch('restartEngine', 1)
+      context.dispatch('restartAllEngines')
     },
     initializeStore (context) {
       if (localStorage.engines) {
@@ -749,8 +746,21 @@ export const store = new Vuex.Store({
     },
     resetEngineData (context, payload) {
       const engineID = payload
+      context.commit('resetEngineTime', engineID)
       context.commit('resetMultiPV', engineID)
       context.commit('resetEngineStats', engineID)
+    },
+    resetAllEngines (context) {
+      for ( let i = 1; i <= context.getters.numberOfAnalysisEngines; i++) {
+        context.dispatch('resetEngine', i)
+      }
+    },
+    resetEngine (context, payload) {
+      const engineID = payload
+      context.dispatch('stopEngine', engineID)
+      context.dispatch('resetEngineData', engineID)
+      console.log('active', engineID, context.getters.active_new(engineID))
+      context.commit('clearIO', engineID)
     },
     setPvEParam (context, payload) {
       context.commit('PvEParam', payload)
@@ -843,16 +853,24 @@ export const store = new Vuex.Store({
       context.commit('resetEngineTime', engineID)
       context.commit('active_new', { active: false, engineID })
     },
+    startEngine (context, payload) {
+      const engineID = payload
+    },
+    restartAllEngines (context) {
+      for (let i = 1; i <= context.getters.numberOfAnalysisEngines; i++) {
+        context.dispatch('restartEngine', i)
+      }
+    },
     restartEngine (context, payload) {
       const engineID = payload
       context.dispatch('resetEngineData', engineID)
-      if (context.getters.active_new(engineID) && !context.getters.PvE) {
+      if (engineID == 1 && context.getters.active_new(engineID) && context.getters.PvE && !context.getters.turn) {
+        context.dispatch('position', engineID)
+        context.dispatch('goEnginePvE')
+      } else if (context.getters.active_new(engineID) && !context.getters.PvE) {
         context.dispatch('stopEngine', engineID)
         context.dispatch('position', engineID)
         context.dispatch('goEngine', engineID)
-      } else if (context.getters.active_new(engineID) && context.getters.PvE && !context.getters.turn) {
-        context.dispatch('position', engineID)
-        context.dispatch('goEnginePvE')
       }
     },
     position (context, payload) {
@@ -866,7 +884,7 @@ export const store = new Vuex.Store({
       if (context.state.fen !== payload) {
         context.commit('fen', payload)
         context.dispatch('updateBoard')
-        context.dispatch('restartEngine', 1)
+        context.dispatch('restartAllEngines')
       }
     },
     fenField (context, payload) {
@@ -874,7 +892,7 @@ export const store = new Vuex.Store({
         if (context.state.fen !== payload) {
           context.commit('fen', payload)
           context.dispatch('updateBoard')
-          context.dispatch('restartEngine', 1)
+          context.dispatch('restartAllEngines')
           context.commit('newBoard', { fen: payload })
           let index = 1
           while (payload[payload.length - index] !== ' ') {
@@ -904,7 +922,17 @@ export const store = new Vuex.Store({
       context.commit('active', payload)
     },
     active_new (context, payload) {
-      context.commit('active_new', payload)
+      const { active, engineID } = payload
+      // Only do something if the active state is changing
+      if (active != context.getters.active_new(engineID)) {
+        if (active) { // If turning on
+          context.dispatch('position', engineID)
+          context.dispatch('goEngine', engineID)
+        } else { // If turning off
+          context.dispatch('stopEngine', engineID)
+        }
+        context.commit('active_new', payload)
+      }
     },
     PvE (context, payload) {
       context.commit('PvE', payload)
@@ -938,7 +966,7 @@ export const store = new Vuex.Store({
     },
     variant (context, payload) {
       if (context.getters.variant !== payload) {
-        // remove all engine, except the first one
+        // remove all engines, except the first one
         context.dispatch('removeAllEngines')
 
         // prepare engine
@@ -1136,6 +1164,10 @@ export const store = new Vuex.Store({
       context.dispatch('addEngineWatchers', engineID)
     },
     removeAnalysisEngine (context) {
+      const engineID = context.getters.numberOfAnalysisEngines
+      if (context.getters.active_new(engineID)) {
+        context.dispatch('stopEngine', engineID)
+      }
       context.commit('removeAnalysisEngine')
     },
     removeAllEngines (context) {
@@ -1181,8 +1213,8 @@ export const store = new Vuex.Store({
     updateMultiPV (context, payload) {
       const { info, engineID } = payload
 
-      // ignore pv updates when engine is expected to be inactive
-      if (!context.getters.active_new(engineID)) {
+      // ignore pv updates when engine is already removed
+      if (context.getters.numberOfAnalysisEngines < engineID) {
         return
       }
 
@@ -1369,6 +1401,9 @@ export const store = new Vuex.Store({
     },
     computeEngine (state) {
       return (engineID) => state.analysisEngines[engineID-1].engine
+    },
+    numberOfAnalysisEngines (state) {
+      return state.analysisEngines.length
     },
     PvE (state) {
       return state.PvE
